@@ -30,7 +30,7 @@ const LoginScreenContents = () => {
     window.electron
       .invoke('api-request', {
         method: 'POST',
-        url: 'https://freshlypicks.com/api/accountant-signin',
+        url: `${baseUrl}/accountant-signin`,
         headers: {
           'Content-Type': 'application/json',
         },
