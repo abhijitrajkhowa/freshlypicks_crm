@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import './VerticalNavBar.css';
 import {
   AppstoreOutlined,
@@ -8,8 +9,12 @@ import {
   BookOutlined,
   DashboardOutlined,
   ReconciliationOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
-import { Menu } from 'antd';
+import { Menu, Modal } from 'antd';
+import { useDispatch } from 'react-redux';
+import { CLEAR_USER_DATA } from '../../redux/types';
+import { useNavigate } from 'react-router-dom';
 
 function getItem(label, key, icon, children, type) {
   return {
@@ -75,15 +80,33 @@ const items = [
     [
       getItem('Setting', 'Setting', <SettingOutlined />),
       getItem('Freshly picks', 'Freshly picks', <MailOutlined />),
+      getItem('Log out', 'Log out', <LogoutOutlined />),
     ],
     'group',
   ),
 ];
 
 const VerticalNavBar = () => {
+  const [toggleModal, setToggleModal] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleToggleModal = () => {
+    setToggleModal((toggleModal) => !toggleModal);
+  };
+
+  const logOut = () => {
+    window.electron.invoke('remove-store-value', 'token');
+    dispatch({ type: CLEAR_USER_DATA });
+    navigate('/');
+  };
+
   const onClick = (e) => {
     if (e.key === 'sub1') {
       console.log('sub1');
+    }
+    if (e.key === 'Log out') {
+      handleToggleModal();
     }
   };
 
@@ -97,6 +120,15 @@ const VerticalNavBar = () => {
 
   return (
     <>
+      <Modal
+        title="Log out"
+        okText="Yes"
+        onCancel={handleToggleModal}
+        onOk={logOut}
+        open={toggleModal}
+      >
+        Are you sure you want to log out?
+      </Modal>
       <div className="verticalNavBar">
         <Menu
           onClick={onClick}

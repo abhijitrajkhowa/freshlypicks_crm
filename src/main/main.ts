@@ -26,6 +26,11 @@ ipcMain.handle('get-store-value', (event, key) => {
   return store.get(key);
 });
 
+ipcMain.handle('remove-store-value', (event, key) => {
+  store.delete(key);
+});
+
+
 ipcMain.handle('api-request', (event, options) => {
   return new Promise((resolve, reject) => {
     const request = net.request(options);

@@ -1,5 +1,6 @@
 import React from 'react';
 import './Home.css';
+import { Avatar } from 'antd';
 
 import VerticalNavBar from '../../components/VerticalNavBar/VerticalNavBar';
 
