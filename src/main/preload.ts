@@ -22,6 +22,10 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
   },
+  invoke: (channel: string, ...args: any) => ipcRenderer.invoke(channel, ...args),
+  on: (channel: string, func: (event: Electron.IpcRendererEvent, ...args: any[]
+      /* eslint no-unused-vars: off */
+    ) => void) => ipcRenderer.on(channel, func),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

@@ -9,11 +9,46 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain,net } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import Store from 'electron-store';
+
+const store = new Store();
+
+ipcMain.handle('set-store-value', (event, key, value) => {
+  store.set(key, value);
+});
+
+ipcMain.handle('get-store-value', (event, key) => {
+  return store.get(key);
+});
+
+ipcMain.handle('api-request', (event, options) => {
+  return new Promise((resolve, reject) => {
+    const request = net.request(options);
+
+    request.on('response', (response) => {
+      let body = '';
+      response.on('data', (chunk) => {
+        body += chunk.toString();
+      });
+      response.on('end', () => {
+        resolve({ status: response.statusCode, body });
+      });
+    });
+
+    request.on('error', reject);
+
+    if (options.method === 'POST') {
+      request.write(JSON.stringify(options.body));
+    }
+
+    request.end();
+  });
+});
 
 class AppUpdater {
   constructor() {
@@ -78,6 +113,7 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
+      contextIsolation: true,
     },
   });
 
