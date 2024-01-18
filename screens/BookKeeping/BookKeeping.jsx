@@ -6,13 +6,17 @@ import { CommentOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { FloatButton } from 'antd';
 
 const BookKeeping = () => {
+  const floatGroupStyle = {
+    right: 48,
+  };
+
   return (
     <>
       <div>
         <FloatButton.Group
           trigger="click"
           type="primary"
-          style={{ right: 48 }}
+          style={floatGroupStyle}
           icon={<PlusOutlined />}
         >
           <FloatButton tooltip=">////<" icon={<CommentOutlined />} />
