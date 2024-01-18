@@ -13,7 +13,7 @@
 
 body {
   position: relative;
-  color: white;
+  color: var(--text-color);
   height: 100vh;
   background: #fafafa;
   font-family: 'Space Grotesk', sans-serif;

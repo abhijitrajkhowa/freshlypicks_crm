@@ -47,12 +47,14 @@ const LoginScreenContents = () => {
           return;
         }
         setIsButtonLoading(false);
+        toast.success('Welcome dear user', {
+          position: 'bottom-center',
+        });
         window.electron.invoke('set-store-value', 'token', data.token);
         dispatch({
           type: GET_USER_DATA,
           payload: data.accountant,
         });
-        console.log('signed in');
         navigate('/home');
       })
       .catch((err) => {

@@ -7,6 +7,7 @@ import BookKeeping from '../BookKeeping/BookKeeping';
 import PendingPayments from '../PendingPayments/PendingPayments';
 import GenerateBill from '../GenerateBill/GenerateBill';
 import Miscellaneous from '../Miscellaneous/Miscellaneous';
+import Setting from '../Setting/Setting';
 
 import VerticalNavBar from '../../components/VerticalNavBar/VerticalNavBar';
 
@@ -24,6 +25,7 @@ const Home = () => {
             <Route path="pendingPayments" element={<PendingPayments />} />
             <Route path="generateBill" element={<GenerateBill />} />
             <Route path="miscellaneous" element={<Miscellaneous />} />
+            <Route path="setting" element={<Setting />} />
           </Routes>
         </div>
       </div>
