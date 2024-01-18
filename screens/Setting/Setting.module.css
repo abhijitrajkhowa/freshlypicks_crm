@@ -1,0 +1,11 @@
+.customizationSection {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+}
+
+.themeHeaderAndContentsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
