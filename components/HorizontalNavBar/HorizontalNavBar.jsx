@@ -24,6 +24,7 @@ const HorizontalNavBar = () => {
     { backgroundColor: '#e3eaa7', color: '#0e9aa7' },
     { backgroundColor: '#ffecd1', color: '#cb8fa9' },
   ];
+  const customTheme = useSelector((state) => state.themeReducer);
 
   const user = useSelector((state) => state.user);
   const [avatarStyle, setAvatarStyle] = useState(colorOptions[0]);
@@ -47,7 +48,13 @@ const HorizontalNavBar = () => {
 
   return (
     <>
-      <div className={styles.horizontalNavBar}>
+      <div
+        className={
+          customTheme === 'dark'
+            ? styles.horizontalNavBarDarkTheme
+            : styles.horizontalNavBar
+        }
+      >
         <div className={styles.mainContents}>
           <Input
             size="large"

@@ -2,6 +2,10 @@
   background-color: #fefefe;
   padding: 8px;
 }
+.horizontalNavBarDarkTheme {
+  background-color: #1c1c1c;
+  padding: 8px;
+}
 
 .mainContents {
   display: flex;
