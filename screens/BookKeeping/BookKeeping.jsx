@@ -15,8 +15,8 @@ const BookKeeping = () => {
           style={{ right: 48 }}
           icon={<PlusOutlined />}
         >
-          <FloatButton icon={<CommentOutlined />} />
-          <FloatButton icon={<EditOutlined />} />
+          <FloatButton tooltip=">////<" icon={<CommentOutlined />} />
+          <FloatButton tooltip="Add record" icon={<EditOutlined />} />
         </FloatButton.Group>
       </div>
     </>
