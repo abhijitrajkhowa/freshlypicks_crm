@@ -1,5 +1,5 @@
 import React from 'react';
-import './GenerateBill.css';
+import styles from './GenerateBill.module.css';
 
 const GenerateBill = () => {
   return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import './VerticalNavBar.css';
+import styles from './VerticalNavBar.module.css';
 import {
   AppstoreOutlined,
   MailOutlined,
@@ -79,12 +79,10 @@ const VerticalNavBar = () => {
     navigate(`/home/dashboard`);
   }, []);
 
-  const styles = {
-    menuStyle: {
-      width: 256,
-      height: '100%',
-      fontSize: '16px',
-    },
+  const menuStyle = {
+    width: 256,
+    height: '100%',
+    fontSize: '16px',
   };
 
   return (
@@ -98,10 +96,10 @@ const VerticalNavBar = () => {
       >
         Are you sure you want to log out?
       </Modal>
-      <div className="verticalNavBar">
+      <div className={styles.verticalNavBar}>
         <Menu
           onClick={onClick}
-          style={styles.menuStyle}
+          style={menuStyle}
           defaultSelectedKeys={['/dashboard']}
           mode="inline"
           items={items}

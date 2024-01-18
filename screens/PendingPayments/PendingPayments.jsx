@@ -1,5 +1,5 @@
 import React from 'react';
-import './PendingPayments.css';
+import styles from './PendingPayments.module.css';
 
 const PendingPayments = () => {
   return (

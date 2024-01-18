@@ -1,5 +1,5 @@
 import React from 'react';
-import './BookKeeping.css';
+import styles from './BookKeeping.module.css';
 
 const BookKeeping = () => {
   return (

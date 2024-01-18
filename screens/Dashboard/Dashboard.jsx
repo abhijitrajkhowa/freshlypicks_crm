@@ -1,67 +1,14 @@
 import React from 'react';
-import './Dashboard.css';
+import styles from './Dashboard.module.css';
+
+import HorizontalNavBar from '../../components/HorizontalNavBar/HorizontalNavBar';
 
 const Dashboard = () => {
   return (
     <>
-      <div className="dashboard">
-        <div className="mainContents">
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
-          <h1>Dashboard</h1>
+      <div className={styles.dashboard}>
+        <div className={styles.mainContents}>
+          <HorizontalNavBar />
         </div>
       </div>
     </>

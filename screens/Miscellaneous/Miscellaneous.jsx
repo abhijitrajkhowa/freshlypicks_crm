@@ -1,5 +1,5 @@
 import React from 'react';
-import './Miscellaneous.css';
+import styles from './Miscellaneous.module.css';
 
 const Miscellaneous = () => {
   return (

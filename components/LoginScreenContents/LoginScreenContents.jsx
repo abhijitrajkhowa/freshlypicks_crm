@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import './LoginScreenContents.css';
+import styles from './LoginScreenContents.module.css';
 import { baseUrl } from '../../utils/helper';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -63,14 +63,44 @@ const LoginScreenContents = () => {
 
   useEffect(() => {
     window.electron.invoke('get-store-value', 'token').then((token) => {
-      if (token) navigate('/home');
+      if (token) {
+        window.electron
+          .invoke('api-request', {
+            method: 'GET',
+            url: `${baseUrl}/get-accountant-info`,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            headers: {
+              authorization: token,
+            },
+          })
+          .then((response) => {
+            const data = JSON.parse(response.body);
+            if (response.status !== 200) {
+              toast.error(data.error);
+              return;
+            }
+            toast.success('Welcome back dear user', {
+              position: 'bottom-center',
+            });
+            dispatch({
+              type: GET_USER_DATA,
+              payload: data,
+            });
+            navigate('/home');
+          })
+          .catch((err) => {
+            toast.error(err.message);
+          });
+      }
     });
   }, []);
 
   return (
     <>
-      <div className="loginScreenContents">
-        <div className="mainContents">
+      <div className={styles.loginScreenContents}>
+        <div className={styles.mainContents}>
           <Input
             onChange={(event) => {
               setPhone(event.target.value);

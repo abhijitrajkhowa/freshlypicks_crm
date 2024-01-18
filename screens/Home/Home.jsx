@@ -1,5 +1,5 @@
 import React from 'react';
-import './Home.css';
+import styles from './Home.module.css';
 import { Routes, Route } from 'react-router-dom';
 
 import Dashboard from '../Dashboard/Dashboard';
@@ -13,11 +13,11 @@ import VerticalNavBar from '../../components/VerticalNavBar/VerticalNavBar';
 const Home = () => {
   return (
     <>
-      <div className="home">
-        <div className="verticalNavWrapper">
+      <div className={styles.home}>
+        <div className={styles.verticalNavWrapper}>
           <VerticalNavBar />
         </div>
-        <div className="mainContents">
+        <div className={styles.mainContents}>
           <Routes>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="bookKeeping" element={<BookKeeping />} />

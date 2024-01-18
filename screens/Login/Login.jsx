@@ -1,12 +1,12 @@
 import React from 'react';
-import './Login.css';
+import styles from './Login.module.css';
 
 import LoginScreenContents from '../../components/LoginScreenContents/LoginScreenContents';
 
 const Login = () => {
   return (
     <>
-      <div className="login">
+      <div className={styles.login}>
         <LoginScreenContents />
       </div>
     </>

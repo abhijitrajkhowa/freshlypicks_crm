@@ -1,0 +1,16 @@
+.horizontalNavBar {
+  background-color: #fefefe;
+  padding: 16px;
+}
+
+.mainContents {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.avatarText {
+  user-select: none;
+}
