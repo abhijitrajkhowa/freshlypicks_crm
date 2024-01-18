@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Setting.module.css';
 import { useState, useEffect } from 'react';
-import { Radio, Space, Input, Divider } from 'antd';
+import { Radio, Space, Divider, Select } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   SET_LIGHT_THEME,
@@ -16,6 +16,10 @@ const Setting = () => {
   const customColorScheme = useSelector((state) => state.colorScheme);
 
   const dispatch = useDispatch();
+
+  const selectStyle = {
+    width: 200,
+  };
 
   const onChange = (e) => {
     setValue(e.target.value);
@@ -34,10 +38,10 @@ const Setting = () => {
     }
   };
 
-  const onColorChange = (e) => {
-    setColorScheme(e.target.value);
-    dispatch({ type: SET_COLOR_SCHEME, payload: e.target.value });
-    window.electron.invoke('set-store-value', 'colorScheme', e.target.value);
+  const onColorChange = (value) => {
+    setColorScheme(value);
+    dispatch({ type: SET_COLOR_SCHEME, payload: value });
+    window.electron.invoke('set-store-value', 'colorScheme', value);
   };
 
   useEffect(() => {
@@ -93,16 +97,21 @@ const Setting = () => {
             <Divider />
             <div className={styles.themeHeaderAndContentsWrapper}>
               <h3>Color scheme</h3>
-              <Radio.Group onChange={onColorChange} value={colorScheme}>
-                <Space direction="vertical">
-                  <Radio value="blue">Blue</Radio>
-                  <Radio value="purple">Purple</Radio>
-                  <Radio value="magenta">Magenta</Radio>
-                  <Radio value="red">Red</Radio>
-                  <Radio value="orange">Orange</Radio>
-                  <Radio value="yellow">Yellow</Radio>
-                </Space>
-              </Radio.Group>
+              <div className={styles.dropDownColorSchemeContents}>
+                <Select
+                  size="large"
+                  onChange={onColorChange}
+                  style={selectStyle}
+                  value={colorScheme}
+                >
+                  <Option value="blue">Blue</Option>
+                  <Option value="purple">Purple</Option>
+                  <Option value="magenta">Magenta</Option>
+                  <Option value="red">Red</Option>
+                  <Option value="orange">Orange</Option>
+                  <Option value="yellow">Yellow</Option>
+                </Select>
+              </div>
             </div>
           </div>
         </div>

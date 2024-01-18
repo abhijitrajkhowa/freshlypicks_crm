@@ -9,3 +9,7 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.dropDownColorSchemeContents {
+  margin-top: 4px;
+}
