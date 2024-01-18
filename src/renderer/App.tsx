@@ -9,13 +9,17 @@ import { useDispatch } from 'react-redux';
 
 import Home from '../../screens/Home/Home';
 import Login from '../../screens/Login/Login';
-import { SET_DARK_THEME, SET_LIGHT_THEME } from '../../redux/types';
+import {
+  SET_DARK_THEME,
+  SET_LIGHT_THEME,
+  SET_COLOR_SCHEME,
+} from '../../redux/types';
 
 export default function App() {
   const customTheme = useSelector((state: any) => state.themeReducer);
+  const customColorScheme = useSelector((state: any) => state.colorScheme);
   const dispatch = useDispatch();
 
-  // Set theme from local storage on load
   useEffect(() => {
     const storedTheme = window.localStorage.getItem('theme');
     if (storedTheme === 'light') {
@@ -27,9 +31,18 @@ export default function App() {
         type: SET_DARK_THEME,
       });
     }
+    window.electron
+      .invoke('get-store-value', 'colorScheme')
+      .then((colorScheme: any) => {
+        if (colorScheme !== null) {
+          dispatch({
+            type: SET_COLOR_SCHEME,
+            payload: colorScheme,
+          });
+        }
+      });
   }, [dispatch]);
 
-  // Update theme in local storage and document body when it changes
   useEffect(() => {
     window.localStorage.setItem('theme', customTheme);
     document.body.style.setProperty(
@@ -42,11 +55,32 @@ export default function App() {
     );
   }, [customTheme]);
 
+  const setColorScheme = () => {
+    switch (customColorScheme) {
+      case 'blue':
+        return RefineThemes.Blue;
+      case 'purple':
+        return RefineThemes.Purple;
+      case 'magenta':
+        return RefineThemes.Magenta;
+      case 'red':
+        return RefineThemes.Red;
+      case 'orange':
+        return RefineThemes.Orange;
+      case 'yellow':
+        return RefineThemes.Yellow;
+    }
+  };
+
+  useEffect(() => {
+    window.localStorage.setItem('colorScheme', customColorScheme);
+  }, [customColorScheme]);
+
   return (
     <>
       <ConfigProvider
         theme={{
-          ...RefineThemes.Magenta,
+          ...setColorScheme(),
           algorithm:
             customTheme === 'dark'
               ? theme.darkAlgorithm
