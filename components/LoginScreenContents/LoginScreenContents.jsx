@@ -47,7 +47,7 @@ const LoginScreenContents = () => {
           return;
         }
         setIsButtonLoading(false);
-        toast.success('Welcome dear user', {
+        toast.success('Login successfull', {
           position: 'bottom-center',
         });
         window.electron.invoke('set-store-value', 'token', data.token);
