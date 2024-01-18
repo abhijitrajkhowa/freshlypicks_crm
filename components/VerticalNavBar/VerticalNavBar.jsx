@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './VerticalNavBar.css';
 import {
   AppstoreOutlined,
@@ -27,49 +27,15 @@ function getItem(label, key, icon, children, type) {
 }
 
 const items = [
-  getItem('Dashboard', 'sub1', <DashboardOutlined />, [
-    getItem(
-      'Chart',
-      'g1',
-      null,
-      [getItem('Weekly Chart', '1'), getItem('Daily Chart', '2')],
-      'group',
-    ),
-    getItem(
-      'Item 2',
-      'g2',
-      null,
-      [getItem('Option 3', '3'), getItem('Option 4', '4')],
-      'group',
-    ),
-  ]),
-  getItem('Book Keeping', 'sub2', <BookOutlined />, [
-    getItem('Option 5', '5'),
-    getItem('Option 6', '6'),
-    getItem('Submenu', 'sub3', null, [
-      getItem('Option 7', '7'),
-      getItem('Option 8', '8'),
-    ]),
-  ]),
-
-  getItem('Pending Payments', 'sub4', <ExclamationCircleOutlined />, [
-    getItem('Option 9', '9'),
-    getItem('Option 10', '10'),
-    getItem('Option 11', '11'),
-    getItem('Option 12', '12'),
-  ]),
-  getItem('Generate Bill', 'sub5', <ReconciliationOutlined />, [
-    getItem('Option 13', '13'),
-    getItem('Option 14', '14'),
-    getItem('Option 15', '15'),
-    getItem('Option 16', '16'),
-  ]),
-  getItem('Miscellaneous', 'sub6', <AppstoreOutlined />, [
-    getItem('Option 17', '17'),
-    getItem('Option 18', '18'),
-    getItem('Option 19', '19'),
-    getItem('Option 20', '20'),
-  ]),
+  getItem('Dashboard', '/dashboard', <DashboardOutlined />),
+  getItem('Book Keeping', '/bookKeeping', <BookOutlined />),
+  getItem(
+    'Pending Payments',
+    '/pendingPayments',
+    <ExclamationCircleOutlined />,
+  ),
+  getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
+  getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
   {
     type: 'divider',
   },
@@ -78,8 +44,8 @@ const items = [
     'grp',
     null,
     [
-      getItem('Setting', 'Setting', <SettingOutlined />),
-      getItem('Freshly picks', 'Freshly picks', <MailOutlined />),
+      getItem('Setting', '/setting', <SettingOutlined />),
+      getItem('Freshly picks', '/freshlyPicks', <MailOutlined />),
       getItem('Log out', 'Log out', <LogoutOutlined />),
     ],
     'group',
@@ -101,14 +67,17 @@ const VerticalNavBar = () => {
     navigate('/');
   };
 
-  const onClick = (e) => {
-    if (e.key === 'sub1') {
-      console.log('sub1');
-    }
-    if (e.key === 'Log out') {
+  const onClick = ({ key }) => {
+    if (key === 'Log out') {
       handleToggleModal();
+    } else {
+      navigate(`/home${key}`);
     }
   };
+
+  useEffect(() => {
+    navigate(`/home/dashboard`);
+  }, []);
 
   const styles = {
     menuStyle: {
@@ -133,8 +102,7 @@ const VerticalNavBar = () => {
         <Menu
           onClick={onClick}
           style={styles.menuStyle}
-          defaultSelectedKeys={['1']}
-          defaultOpenKeys={['sub1']}
+          defaultSelectedKeys={['/dashboard']}
           mode="inline"
           items={items}
         />
