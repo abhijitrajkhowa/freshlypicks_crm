@@ -56,21 +56,24 @@ const HorizontalNavBar = () => {
         }
       >
         <div className={styles.mainContents}>
-          <Input
-            size="large"
-            style={inputStyle}
-            placeholder="Search"
-            prefix={<SearchOutlined />}
-          />
-          <Popover
-            placement="leftBottom"
-            content={popoverContent}
-            title="About me"
-          >
-            <Avatar shape="square" size={40} style={avatarStyle}>
-              <p className={styles.avatarText}>{user.name[0]}</p>
-            </Avatar>
-          </Popover>
+          <h2 className={styles.userName}>Hello, {user.name}</h2>
+          <div className={styles.searchBarAndAvatarWrapper}>
+            <Input
+              size="large"
+              style={inputStyle}
+              placeholder="Search"
+              prefix={<SearchOutlined />}
+            />
+            <Popover
+              placement="leftBottom"
+              content={popoverContent}
+              title="About me"
+            >
+              <Avatar shape="square" size={40} style={avatarStyle}>
+                <p className={styles.avatarText}>{user.name[0]}</p>
+              </Avatar>
+            </Popover>
+          </div>
         </div>
       </div>
     </>

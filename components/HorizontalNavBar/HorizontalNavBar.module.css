@@ -11,12 +11,17 @@
 
 .mainContents {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   flex-direction: row;
-  gap: 16px;
+  padding: 0 0 0 16px;
 }
 
 .avatarText {
   user-select: none;
+}
+
+.searchBarAndAvatarWrapper {
+  display: flex;
+  gap: 16px;
 }
