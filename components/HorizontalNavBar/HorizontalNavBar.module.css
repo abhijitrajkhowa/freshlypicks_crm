@@ -1,10 +1,12 @@
 .horizontalNavBar {
   background-color: #fefefe;
   padding: 8px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 .horizontalNavBarDarkTheme {
   background-color: #1c1c1c;
   padding: 8px;
+  box-shadow: 0 8px 15px rgba(255, 255, 255, 0.2);
 }
 
 .mainContents {
