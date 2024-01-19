@@ -80,9 +80,12 @@ const VerticalNavBar = () => {
   }, []);
 
   const menuStyle = {
+    display: 'flex',
+    flexDirection: 'column',
     width: 256,
     height: '100%',
     fontSize: '16px',
+    paddingTop: 24,
   };
 
   return (
