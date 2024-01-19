@@ -3,3 +3,13 @@
   display: flex;
   justify-content: space-between;
 }
+
+.topAlignedRow td {
+  vertical-align: top;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.switchWrapper {
+  padding: 8px 16px 0 16px;
+}
