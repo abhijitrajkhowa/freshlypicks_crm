@@ -93,6 +93,7 @@ const VerticalNavBar = () => {
       <Modal
         title="Log out"
         okText="Yes"
+        centered
         onCancel={handleToggleModal}
         onOk={logOut}
         open={toggleModal}
