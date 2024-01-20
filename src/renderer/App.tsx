@@ -53,6 +53,18 @@ export default function App() {
       '--text-color',
       customTheme === 'dark' ? '#fafafa' : '#2C2C2C',
     );
+    document.body.style.setProperty(
+      '--scrollbar-thumb-color',
+      customTheme === 'dark'
+        ? 'rgba(255, 255, 255, 0.5)'
+        : 'rgba(68, 68, 68, 0.5)',
+    );
+    document.body.style.setProperty(
+      '--scrollbar-thumb-hover-color',
+      customTheme === 'dark'
+        ? 'rgba(255, 255, 255, 0.7)'
+        : 'rgba(68, 68, 68, 0.7)',
+    );
   }, [customTheme]);
 
   const setColorScheme = () => {
