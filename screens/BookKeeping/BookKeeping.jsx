@@ -44,6 +44,8 @@ const BookKeeping = () => {
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [vendorName, setVendorName] = useState('');
   const [vendorList, setVendorList] = useState([]);
+  const [selectedBillItem, setSelectedBillItem] = useState({});
+  const [isAddingToVendorBill, setIsAddingToVendorBill] = useState(false);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -125,7 +127,12 @@ const BookKeeping = () => {
           style={listItemStyle}
           dataSource={items}
           renderItem={(item, index) => (
-            <List.Item style={listItemChildStyle} onClick={handleItemClick}>
+            <List.Item
+              style={listItemChildStyle}
+              onClick={() => {
+                handleItemClick(item);
+              }}
+            >
               {index + 1}. {item.name} -- {item.quantity} {item.unit}
             </List.Item>
           )}
@@ -285,8 +292,9 @@ const BookKeeping = () => {
     setProcessedOrders(newProcessedOrders);
   };
 
-  const handleItemClick = () => {
+  const handleItemClick = (item) => {
     setIsItemModalVisible(true);
+    setSelectedBillItem(item);
   };
 
   const onDateChange = (date, dateString) => {
@@ -321,6 +329,43 @@ const BookKeeping = () => {
       })
       .catch((err) => {
         setIsImportButtonLoading(false);
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  const addToVendorBill = (order) => {
+    setIsAddingToVendorBill(true);
+    const vendor = vendorList.find((vendor) => vendor.name === vendorName);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/add-to-vendor-bill`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          vendorId: vendor._id,
+          date: new Date(date),
+          order: order,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          setIsAddingToVendorBill(false);
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        setIsAddingToVendorBill(false);
+        setSelectedBillItem({});
+        setVendorName('');
+      })
+      .catch((err) => {
+        setIsAddingToVendorBill(false);
         toast.error(err.message, {
           position: 'bottom-center',
         });
@@ -386,12 +431,16 @@ const BookKeeping = () => {
         centered
         title="Add to vendor bill"
         open={isItemModalVisible}
-        onOk={() => setIsItemModalVisible(false)}
+        onOk={() => {
+          setIsItemModalVisible(false);
+          addToVendorBill(selectedBillItem);
+        }}
+        okButtonProps={{ disabled: !vendorName, loading: isAddingToVendorBill }}
         okText="Add"
         onCancel={() => setIsItemModalVisible(false)}
       >
         <Select
-          defaultValue="Select vendor"
+          value={vendorName || 'Select vendor'}
           size="large"
           style={selectStyle}
           allowClear
