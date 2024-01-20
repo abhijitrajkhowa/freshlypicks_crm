@@ -1,12 +1,19 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import styles from './BookKeeping.module.css';
-import { CommentOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  CommentOutlined,
+  EditOutlined,
+  PlusOutlined,
+  SyncOutlined,
+  DownOutlined,
+} from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
+import { useSelector } from 'react-redux';
 
 import {
   FloatButton,
@@ -18,15 +25,25 @@ import {
   Input,
   Modal,
   Spin,
+  Dropdown,
+  Typography,
+  Space,
+  Menu,
+  Select,
 } from 'antd';
 
 const BookKeeping = () => {
+  const user = useSelector((state) => state.user);
   const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(false);
   const [toggleModal, setToggleModal] = useState(false);
   const [modalData, setModalData] = useState([{}]);
+  const [processedOrders, setProcessedOrders] = useState([]);
+  const [isItemModalVisible, setIsItemModalVisible] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+  const [vendorList, setVendorList] = useState([]);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -55,7 +72,16 @@ const BookKeeping = () => {
     transform: 'translate(-50%)',
   };
 
+  const listItemChildStyle = {
+    cursor: 'pointer',
+  };
+
   const modalStyle = {};
+
+  const selectStyle = {
+    width: '100%',
+    margin: '16px 0 16px 0',
+  };
 
   const dataSource = [
     {
@@ -99,7 +125,7 @@ const BookKeeping = () => {
           style={listItemStyle}
           dataSource={items}
           renderItem={(item, index) => (
-            <List.Item>
+            <List.Item style={listItemChildStyle} onClick={handleItemClick}>
               {index + 1}. {item.name} -- {item.quantity} {item.unit}
             </List.Item>
           )}
@@ -116,6 +142,13 @@ const BookKeeping = () => {
       title: 'C.R',
       dataIndex: 'cr',
       key: 'cr',
+      render: (text, record, index) => (
+        <Input
+          type="number"
+          value={processedOrders[index]['cr']}
+          onChange={(e) => handleCrInputChange(e, index)}
+        />
+      ),
     },
   ];
 
@@ -189,18 +222,6 @@ const BookKeeping = () => {
         />
       ),
     },
-    {
-      title: 'C.R',
-      dataIndex: 'cr',
-      key: 'cr',
-      render: (text, record, index) => (
-        <Input
-          type="number"
-          value={text}
-          onChange={(e) => handleInputChange(e, index, 'cr')}
-        />
-      ),
-    },
   ];
 
   const handleInputChange = (e, index, dataIndex) => {
@@ -220,49 +241,52 @@ const BookKeeping = () => {
     setModalData(newData);
   };
 
+  const handleCrInputChange = (e, index) => {
+    const newProcessedOrders = [...processedOrders];
+    newProcessedOrders[index]['cr'] = parseInt(e.target.value);
+    setProcessedOrders(newProcessedOrders);
+  };
+
   const processOrders = () => {
-    const processedOrders = [];
+    let newProcessedOrders = [];
     if (isDeliveredFiltered) {
       orders
         .filter((order) => order.delivered)
         .forEach((order, index) => {
-          if (order.discount === undefined) order.discount = 0;
-          const totalPrice =
-            order.total + order.deliveryCharge - order.discount;
-
           const onlyAddress = order.address.split('--')[0];
 
-          processedOrders[index] = {
+          newProcessedOrders[index] = {
             key: index,
             index: index + 1,
             name: order.name,
             address: onlyAddress,
             items: order.items,
-            price: totalPrice,
-            cr: totalPrice,
+            price: order.total,
+            cr: 0,
           };
         });
     } else {
       orders.forEach((order, index) => {
-        if (order.discount === undefined) order.discount = 0;
-        const totalPrice = order.total + order.deliveryCharge - order.discount;
-
         const onlyAddress = order.address?.split('--')[0];
 
-        processedOrders[index] = {
+        newProcessedOrders[index] = {
           key: index,
           index: index + 1,
           name: order.name,
           address: onlyAddress,
           items: order.items,
           quantity: order.items,
-          price: totalPrice,
-          cr: totalPrice,
+          price: order.total,
+          cr: 0,
         };
       });
     }
 
-    return processedOrders;
+    setProcessedOrders(newProcessedOrders);
+  };
+
+  const handleItemClick = () => {
+    setIsItemModalVisible(true);
   };
 
   const onDateChange = (date, dateString) => {
@@ -303,14 +327,79 @@ const BookKeeping = () => {
       });
   };
 
+  const getVendorsList = () => {
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-vendors-list`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          managerId: user.id,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        setVendorList(data.vendorsList);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  const processVendorList = () => {
+    const processedVendorList = vendorList?.map((vendor) => {
+      return {
+        value: vendor.name,
+        label: vendor.name,
+      };
+    });
+    return processedVendorList;
+  };
+
   useEffect(() => {
     if (date) {
       getOrdersByDate();
     }
   }, [date]);
 
+  useEffect(() => {
+    processOrders();
+  }, [orders, isDeliveredFiltered]);
+
+  useEffect(() => {
+    getVendorsList();
+  }, []);
+
   return (
     <>
+      <Modal
+        centered
+        title="Add to vendor bill"
+        open={isItemModalVisible}
+        onOk={() => setIsItemModalVisible(false)}
+        okText="Add"
+        onCancel={() => setIsItemModalVisible(false)}
+      >
+        <Select
+          defaultValue="Select vendor"
+          size="large"
+          style={selectStyle}
+          allowClear
+          loading={vendorList.length === 0}
+          onChange={(value) => setVendorName(value)}
+          options={processVendorList()}
+        />
+      </Modal>
       <Modal
         style={modalStyle}
         width={'80%'}
@@ -363,6 +452,7 @@ const BookKeeping = () => {
               onClick={() => {
                 getOrdersByDate();
               }}
+              icon={<SyncOutlined />}
               type="primary"
               size="large"
             >
@@ -382,7 +472,7 @@ const BookKeeping = () => {
           {!isImportButtonLoading && (
             <Table
               style={tableStyle}
-              dataSource={orders ? processOrders() : dataSource}
+              dataSource={orders ? processedOrders : dataSource}
               columns={columns}
               rowClassName={styles.topAlignedRow}
             />
