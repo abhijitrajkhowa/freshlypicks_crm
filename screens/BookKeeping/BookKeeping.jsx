@@ -6,6 +6,7 @@ import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import dayjs from 'dayjs';
 
 import {
   FloatButton,
@@ -16,10 +17,11 @@ import {
   Switch,
   Input,
   Modal,
+  Spin,
 } from 'antd';
 
 const BookKeeping = () => {
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(false);
@@ -44,6 +46,13 @@ const BookKeeping = () => {
 
   const listItemStyle = {
     width: 300,
+  };
+
+  const spinStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '55%',
+    transform: 'translate(-50%)',
   };
 
   const modalStyle = {};
@@ -294,9 +303,11 @@ const BookKeeping = () => {
       });
   };
 
-  const onImportButtonClick = () => {
-    getOrdersByDate();
-  };
+  useEffect(() => {
+    if (date) {
+      getOrdersByDate();
+    }
+  }, [date]);
 
   return (
     <>
@@ -343,16 +354,11 @@ const BookKeeping = () => {
         </FloatButton.Group>
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
-            <DatePicker onChange={onDateChange} size="large" />
-            <Button
-              onClick={onImportButtonClick}
-              loading={isImportButtonLoading}
-              type="primary"
+            <DatePicker
+              value={dayjs(date)}
+              onChange={onDateChange}
               size="large"
-              icon={<PlusOutlined />}
-            >
-              Import
-            </Button>
+            />
           </div>
           <div className={styles.switchWrapper}>
             <Switch
@@ -363,12 +369,15 @@ const BookKeeping = () => {
               unCheckedChildren="Show Delivered Orders"
             />
           </div>
-          <Table
-            style={tableStyle}
-            dataSource={orders ? processOrders() : dataSource}
-            columns={columns}
-            rowClassName={styles.topAlignedRow}
-          />
+          {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
+          {!isImportButtonLoading && (
+            <Table
+              style={tableStyle}
+              dataSource={orders ? processOrders() : dataSource}
+              columns={columns}
+              rowClassName={styles.topAlignedRow}
+            />
+          )}
         </div>
       </div>
     </>
