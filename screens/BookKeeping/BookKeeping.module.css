@@ -1,7 +1,8 @@
 .datePickerWrapper {
   padding: 16px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px;
 }
 
 .topAlignedRow td {

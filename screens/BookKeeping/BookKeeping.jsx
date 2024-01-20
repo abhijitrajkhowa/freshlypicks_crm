@@ -359,6 +359,15 @@ const BookKeeping = () => {
               onChange={onDateChange}
               size="large"
             />
+            <Button
+              onClick={() => {
+                getOrdersByDate();
+              }}
+              type="primary"
+              size="large"
+            >
+              Refresh
+            </Button>
           </div>
           <div className={styles.switchWrapper}>
             <Switch
