@@ -39,6 +39,7 @@ const GenerateBill = () => {
   const [isSavingBill, setIsSavingBill] = useState(false);
   const [isRemarksModalVisible, setIsRemarksModalVisible] = useState(false);
   const [currentEditItemIndex, setCurrentEditItemIndex] = useState(null);
+  const [currentRemarks, setCurrentRemarks] = useState('');
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -208,6 +209,7 @@ const GenerateBill = () => {
         toast.success(data.message, {
           position: 'bottom-center',
         });
+        setCurrentRemarks('');
         setIsSavingBill(false);
       })
       .catch((err) => {
@@ -267,9 +269,11 @@ const GenerateBill = () => {
         onCancel={() => setIsRemarksModalVisible(false)}
       >
         <Input.TextArea
-          onChange={(e) =>
-            handleRemarksChange(currentEditItemIndex, e.target.value)
-          }
+          value={currentRemarks}
+          onChange={(e) => {
+            handleRemarksChange(currentEditItemIndex, e.target.value);
+            setCurrentRemarks(e.target.value);
+          }}
           rows={4}
           placeholder="Enter remarks"
         />
@@ -359,6 +363,7 @@ const GenerateBill = () => {
                           <EditOutlined
                             onClick={() => {
                               setIsRemarksModalVisible(true);
+                              setCurrentRemarks(vendorBills[index].remarks);
                               setCurrentEditItemIndex(index);
                             }}
                           />
