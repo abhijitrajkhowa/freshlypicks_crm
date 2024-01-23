@@ -122,6 +122,11 @@ const createWindow = async () => {
     },
   });
 
+  // Clear the local storage
+  // await mainWindow.webContents.session.clearStorageData({
+  //   storages: ['localstorage']
+  // });
+
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
   mainWindow.on('ready-to-show', () => {
