@@ -167,6 +167,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Name"
           onChange={(e) => handleInputChange(e, index, 'name')}
         />
       ),
@@ -178,6 +179,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Address"
           onChange={(e) => handleInputChange(e, index, 'address')}
         />
       ),
@@ -189,6 +191,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Items"
           onChange={(e) => handleInputChange(e, index, 'items')}
         />
       ),
@@ -201,6 +204,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Price"
           onChange={(e) => handleInputChange(e, index, 'total')}
         />
       ),
@@ -213,6 +217,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Delivery Charge"
           onChange={(e) => handleInputChange(e, index, 'deliveryCharge')}
         />
       ),
@@ -225,6 +230,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Discount"
           onChange={(e) => handleInputChange(e, index, 'discount')}
         />
       ),
@@ -493,7 +499,7 @@ const BookKeeping = () => {
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
-              value={dayjs(date)}
+              value={dayjs(date ? date : dayjs().format('YYYY-MM-DD'))}
               onChange={onDateChange}
               size="large"
             />
