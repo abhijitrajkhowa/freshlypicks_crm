@@ -10,6 +10,7 @@ import {
   DashboardOutlined,
   ReconciliationOutlined,
   LogoutOutlined,
+  SmileOutlined,
 } from '@ant-design/icons';
 import { Menu, Modal } from 'antd';
 import { useDispatch } from 'react-redux';
@@ -35,6 +36,7 @@ const items = [
     <ExclamationCircleOutlined />,
   ),
   getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
+  getItem('Customers', '/customers', <SmileOutlined />),
   getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
   {
     type: 'divider',

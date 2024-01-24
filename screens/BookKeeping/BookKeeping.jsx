@@ -507,11 +507,13 @@ const BookKeeping = () => {
               onClick={() => {
                 getOrdersByDate();
               }}
+              loading={isImportButtonLoading}
               icon={<SyncOutlined />}
               type="primary"
               size="large"
             >
-              Refresh
+              {isImportButtonLoading && 'Refreshing'}
+              {!isImportButtonLoading && 'Refresh'}
             </Button>
           </div>
           <div className={styles.switchWrapper}>
