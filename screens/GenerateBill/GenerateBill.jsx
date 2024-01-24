@@ -89,6 +89,10 @@ const GenerateBill = () => {
     transform: 'translate(-50%)',
   };
 
+  const badgeWrapperStyle = {
+    width: '80px',
+  };
+
   const getVendorsList = () => {
     window.electron
       .invoke('api-request', {
@@ -358,11 +362,13 @@ const GenerateBill = () => {
                     </Descriptions.Item>
                     <Descriptions.Item label="Paid">
                       <div className={styles.paidTextAndSwitchWrapper}>
-                        {item.paid ? (
-                          <Badge status="success" text="Paid" />
-                        ) : (
-                          <Badge status="processing" text="Not paid" />
-                        )}
+                        <div style={badgeWrapperStyle}>
+                          {item.paid ? (
+                            <Badge status="success" text="Paid" />
+                          ) : (
+                            <Badge status="processing" text="Not paid" />
+                          )}
+                        </div>
                         <Switch
                           checked={item.paid}
                           onChange={(checked) =>
