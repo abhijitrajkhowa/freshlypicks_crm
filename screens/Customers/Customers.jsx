@@ -25,12 +25,12 @@ const Customers = () => {
   const [totalPages, setTotalPages] = useState(10);
   const [pageSize, setPageSize] = useState(10);
 
-  const getAllUsers = (page = 1, limit = pageSize) => {
+  const getAllUsers = (page = 1, limit = pageSize, searchTerm = '') => {
     setIsCustomerInfoLoading(true);
     window.electron
       .invoke('api-request', {
         method: 'GET',
-        url: `${baseUrl}/crm/get-all-users?page=${page}&limit=${limit}`,
+        url: `${baseUrl}/crm/get-all-users?page=${page}&limit=${limit}&search=${searchTerm}`,
       })
       .then((response) => {
         const data = JSON.parse(response.body);
@@ -154,28 +154,7 @@ const Customers = () => {
 
   const processCustomersData = () => {
     const processedData = customers
-      .filter((customer) => customer.name && customer.name.trim() !== '')
-      .filter(
-        (customer) =>
-          customer.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-          customer.phone
-            .toString()
-            .toLowerCase()
-            .includes(searchInput.toLowerCase()) ||
-          (
-            customer.house +
-            ', ' +
-            customer.street +
-            ', ' +
-            customer.city +
-            ', ' +
-            customer.state +
-            ', ' +
-            customer.pin
-          )
-            .toLowerCase()
-            .includes(searchInput.toLowerCase()),
-      )
+      .filter((customer) => customer.name.trim() !== '')
       .map((customer) => {
         const address =
           customer.house +
@@ -316,6 +295,7 @@ const Customers = () => {
             value={searchInput}
             disabled={isCustomerInfoLoading}
             onChange={(e) => setSearchInput(e.target.value)}
+            onSearch={(value) => getAllUsers(1, pageSize, value)}
             style={searchInputStyle}
           />
           <Button
