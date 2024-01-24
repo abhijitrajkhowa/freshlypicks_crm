@@ -37,7 +37,7 @@ const BookKeeping = () => {
   const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(false);
+  const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(true);
   const [toggleModal, setToggleModal] = useState(false);
   const [modalData, setModalData] = useState([{}]);
   const [processedOrders, setProcessedOrders] = useState([]);
