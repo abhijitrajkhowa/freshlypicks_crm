@@ -293,6 +293,7 @@ const Customers = () => {
             placeholder="Search by name or phone number or address"
             size="large"
             value={searchInput}
+            allowClear
             disabled={isCustomerInfoLoading}
             onChange={(e) => setSearchInput(e.target.value)}
             onSearch={(value) => getAllUsers(1, pageSize, value)}
