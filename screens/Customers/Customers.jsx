@@ -21,13 +21,16 @@ const Customers = () => {
   const [loadingButtons, setLoadingButtons] = useState({});
   const [isRefreshButtonLoading, setIsRefreshButtonLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
 
-  const getAllUsers = () => {
+  const getAllUsers = (page = 1, limit = pageSize) => {
     setIsCustomerInfoLoading(true);
     window.electron
       .invoke('api-request', {
         method: 'GET',
-        url: `${baseUrl}/crm/get-all-users`,
+        url: `${baseUrl}/crm/get-all-users?page=${page}&limit=${limit}`,
       })
       .then((response) => {
         const data = JSON.parse(response.body);
@@ -48,6 +51,8 @@ const Customers = () => {
         setIsRefreshButtonLoading(false);
         setInitialLoad(false);
         setCustomers(data.users);
+        setCurrentPage(data.currentPage);
+        setTotalPages(data.totalPages);
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -251,6 +256,10 @@ const Customers = () => {
     getAllUsers();
   }, []);
 
+  useEffect(() => {
+    getAllUsers(currentPage, pageSize);
+  }, [currentPage, pageSize]);
+
   return (
     <>
       <Modal
@@ -328,6 +337,15 @@ const Customers = () => {
           loading={isCustomerInfoLoading}
           dataSource={processCustomersData()}
           columns={columns}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalPages * pageSize,
+            onChange: (page, pageSize) => {
+              setCurrentPage(page);
+              setPageSize(pageSize);
+            },
+          }}
         />
       </div>
     </>
