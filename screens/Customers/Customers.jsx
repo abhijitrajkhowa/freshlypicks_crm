@@ -106,6 +106,37 @@ const Customers = () => {
         setIsCurrentUserOrdersLoading(false);
       });
   };
+  const getCurrentUserOrdersCount = async (phone) => {
+    return window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-user-orders`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          phone: phone,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        return data.orderCount;
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
 
   const processCustomersData = () => {
     const processedData = customers
@@ -190,12 +221,15 @@ const Customers = () => {
           loading={loadingButtons[record.key]}
           onClick={async () => {
             setLoadingButtons({ ...loadingButtons, [record.key]: true });
-            getCurrentUserOrders(record.phone).then((mostOrderedProduct) => {
-              record.mostOrderedProduct = mostOrderedProduct;
-              setCurrentCustomerInfo(record);
-              setIsDetailsModalVisible(true);
-              setLoadingButtons({ ...loadingButtons, [record.key]: false });
-            });
+            const [mostOrderedProduct, orderCount] = await Promise.all([
+              getCurrentUserOrders(record.phone),
+              getCurrentUserOrdersCount(record.phone),
+            ]);
+            record.mostOrderedProduct = mostOrderedProduct;
+            record.orderCount = orderCount;
+            setCurrentCustomerInfo(record);
+            setIsDetailsModalVisible(true);
+            setLoadingButtons({ ...loadingButtons, [record.key]: false });
           }}
         >
           View
@@ -232,7 +266,9 @@ const Customers = () => {
             {currentCustomerInfo.email}
           </Descriptions.Item>
           <Descriptions.Item label="Orders" style={descriptionItemStyle}>
-            {currentCustomerInfo.orders?.length}
+            {currentCustomerInfo.orderCount > 0
+              ? currentCustomerInfo.orderCount
+              : 'No orders yet'}
           </Descriptions.Item>
           <Descriptions.Item label="Cart Items" style={descriptionItemStyle}>
             <List
@@ -248,7 +284,7 @@ const Customers = () => {
             label="Most Ordered Product"
             style={descriptionItemStyle}
           >
-            {currentCustomerInfo.mostOrderedProduct.count > 0
+            {currentCustomerInfo.mostOrderedProduct?.count > 0
               ? `${currentCustomerInfo.mostOrderedProduct.name} (${currentCustomerInfo.mostOrderedProduct.count})`
               : 'No orders yet'}
           </Descriptions.Item>
@@ -260,6 +296,7 @@ const Customers = () => {
             placeholder="Search by name or phone number or address"
             size="large"
             value={searchInput}
+            disabled={isCustomerInfoLoading}
             onChange={(e) => setSearchInput(e.target.value)}
             style={searchInputStyle}
           />

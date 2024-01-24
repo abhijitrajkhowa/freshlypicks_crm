@@ -25,6 +25,7 @@ import {
   List,
   Switch,
   Icon,
+  Spin,
 } from 'antd';
 
 const GenerateBill = () => {
@@ -40,6 +41,7 @@ const GenerateBill = () => {
   const [isRemarksModalVisible, setIsRemarksModalVisible] = useState(false);
   const [currentEditItemIndex, setCurrentEditItemIndex] = useState(null);
   const [currentRemarks, setCurrentRemarks] = useState('');
+  const [isGettingVendorBills, setIsGettingVendorBills] = useState(false);
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -78,6 +80,13 @@ const GenerateBill = () => {
 
   const fontStyle = {
     fontSize: '16px',
+  };
+
+  const spinStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '55%',
+    transform: 'translate(-50%)',
   };
 
   const getVendorsList = () => {
@@ -155,6 +164,7 @@ const GenerateBill = () => {
   };
 
   const getVendorBills = () => {
+    setIsGettingVendorBills(true);
     window.electron
       .invoke('api-request', {
         method: 'POST',
@@ -172,14 +182,17 @@ const GenerateBill = () => {
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setIsGettingVendorBills(false);
           return;
         }
         setVendorBills(data.vendorBills);
+        setIsGettingVendorBills(false);
       })
       .catch((err) => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setIsGettingVendorBills(false);
       });
   };
 
@@ -319,6 +332,7 @@ const GenerateBill = () => {
             </Button>
           </div>
           <div className={styles.vendorBillsDisplayWrapper}>
+            {isGettingVendorBills && <Spin style={spinStyle} size="large" />}
             {vendorBills.map((item, index) => {
               return (
                 <>
