@@ -37,6 +37,8 @@ const Customers = () => {
           });
           setIsCustomerInfoLoading(false);
           setIsRefreshButtonLoading(false);
+
+          setInitialLoad(false);
           return;
         }
         toast.success(data.message, {
@@ -53,6 +55,7 @@ const Customers = () => {
         });
         setIsCustomerInfoLoading(false);
         setIsRefreshButtonLoading(false);
+        setInitialLoad(false);
       });
   };
 

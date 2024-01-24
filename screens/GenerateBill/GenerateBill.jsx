@@ -327,6 +327,7 @@ const GenerateBill = () => {
               icon={<DiffOutlined />}
               type="primary"
               size="large"
+              disabled={isGettingVendorBills}
             >
               Generate bill
             </Button>

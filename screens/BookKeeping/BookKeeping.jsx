@@ -46,6 +46,8 @@ const BookKeeping = () => {
   const [vendorList, setVendorList] = useState([]);
   const [selectedBillItem, setSelectedBillItem] = useState({});
   const [isAddingToVendorBill, setIsAddingToVendorBill] = useState(false);
+  const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -324,20 +326,26 @@ const BookKeeping = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          setIsImportButtonLoading(false);
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setIsImportButtonLoading(false);
+          setIsReloadButtonLoading(false);
+          setIsInitialLoading(false);
           return;
         }
         setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
         setOrders(data.orders);
       })
       .catch((err) => {
-        setIsImportButtonLoading(false);
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
       });
   };
 
@@ -506,14 +514,16 @@ const BookKeeping = () => {
             <Button
               onClick={() => {
                 getOrdersByDate();
+                setIsReloadButtonLoading(true);
               }}
-              loading={isImportButtonLoading}
+              disabled={isInitialLoading}
+              loading={isReloadButtonLoading}
               icon={<SyncOutlined />}
               type="primary"
               size="large"
             >
-              {isImportButtonLoading && 'Refreshing'}
-              {!isImportButtonLoading && 'Refresh'}
+              {isReloadButtonLoading && 'Refreshing'}
+              {!isReloadButtonLoading && 'Refresh'}
             </Button>
           </div>
           <div className={styles.switchWrapper}>
