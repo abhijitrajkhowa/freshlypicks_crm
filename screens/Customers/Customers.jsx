@@ -19,6 +19,8 @@ const Customers = () => {
     useState(false);
   const [currentUserOrders, setCurrentUserOrders] = useState([]);
   const [loadingButtons, setLoadingButtons] = useState({});
+  const [isRefreshButtonLoading, setIsRefreshButtonLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const getAllUsers = () => {
     setIsCustomerInfoLoading(true);
@@ -34,12 +36,15 @@ const Customers = () => {
             position: 'bottom-center',
           });
           setIsCustomerInfoLoading(false);
+          setIsRefreshButtonLoading(false);
           return;
         }
         toast.success(data.message, {
           position: 'bottom-center',
         });
         setIsCustomerInfoLoading(false);
+        setIsRefreshButtonLoading(false);
+        setInitialLoad(false);
         setCustomers(data.users);
       })
       .catch((err) => {
@@ -47,6 +52,7 @@ const Customers = () => {
           position: 'bottom-center',
         });
         setIsCustomerInfoLoading(false);
+        setIsRefreshButtonLoading(false);
       });
   };
 
@@ -304,11 +310,15 @@ const Customers = () => {
             icon={<SyncOutlined />}
             size="large"
             type="primary"
-            onClick={() => getAllUsers()}
-            loading={isCustomerInfoLoading}
+            disabled={initialLoad}
+            onClick={() => {
+              getAllUsers();
+              setIsRefreshButtonLoading(true);
+            }}
+            loading={isRefreshButtonLoading}
           >
-            {isCustomerInfoLoading && 'Refreshing'}
-            {!isCustomerInfoLoading && 'Refresh'}
+            {isRefreshButtonLoading && 'Refreshing'}
+            {!isRefreshButtonLoading && 'Refresh'}
           </Button>
         </div>
         <Table
