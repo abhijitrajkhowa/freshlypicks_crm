@@ -90,3 +90,11 @@
 .editIcon:active {
   transform: scale(0.9); /* Makes the icon slightly smaller when clicking */
 }
+
+.amountWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
