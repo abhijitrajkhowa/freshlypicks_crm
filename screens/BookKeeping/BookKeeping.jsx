@@ -706,7 +706,7 @@ const BookKeeping = () => {
         />
       </Modal>
       <div className={styles.bookKeeping}>
-        <FloatButton.Group
+        {/* <FloatButton.Group
           trigger="click"
           type="primary"
           style={floatGroupStyle}
@@ -718,7 +718,7 @@ const BookKeeping = () => {
             tooltip="Add record"
             icon={<EditOutlined />}
           />
-        </FloatButton.Group>
+        </FloatButton.Group> */}
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
