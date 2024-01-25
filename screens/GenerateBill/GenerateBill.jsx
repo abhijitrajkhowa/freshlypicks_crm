@@ -396,7 +396,7 @@ const GenerateBill = () => {
             {isGettingVendorBills && <Spin style={spinStyle} size="large" />}
             {vendorBills.map((item, index) => {
               return (
-                <div key={index}>
+                <div className={styles.billMainContents} key={index}>
                   <Descriptions
                     key={index}
                     className={styles.descriptionParent}

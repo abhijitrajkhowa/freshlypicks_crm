@@ -2,6 +2,12 @@
   padding-bottom: 32px;
 }
 
+.billMainContents {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .datePickerWrapper {
   padding: 16px;
   display: flex;
