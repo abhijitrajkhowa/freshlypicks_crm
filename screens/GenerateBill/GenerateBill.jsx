@@ -396,7 +396,7 @@ const GenerateBill = () => {
             {isGettingVendorBills && <Spin style={spinStyle} size="large" />}
             {vendorBills.map((item, index) => {
               return (
-                <>
+                <div key={index}>
                   <Descriptions
                     key={index}
                     className={styles.descriptionParent}
@@ -452,71 +452,64 @@ const GenerateBill = () => {
                         <List>
                           {item.orders.map((order, index) => {
                             return (
-                              <>
-                                <List.Item key={index}>
-                                  <div className={styles.listItemMainWrapper}>
+                              <List.Item key={index}>
+                                <div className={styles.listItemMainWrapper}>
+                                  <div className={styles.titleAndHeaderWrapper}>
                                     <div
-                                      className={styles.titleAndHeaderWrapper}
+                                      className={styles.listItemTitleWrapper}
                                     >
-                                      <div
-                                        className={styles.listItemTitleWrapper}
-                                      >
-                                        <span className={styles.listItemtitle}>
-                                          {order.name}{' '}
-                                          <div className={styles.editIcon}>
-                                            <DeleteOutlined
-                                              onClick={() => {
-                                                setIsDeleteItemFromBillModalOpen(
-                                                  true,
-                                                );
-                                                setCurrentDeleteItem({
-                                                  billId: item._id,
-                                                  item: order,
-                                                });
-                                              }}
-                                            />
-                                          </div>
-                                        </span>
-                                      </div>
-                                      <div
-                                        className={styles.listItemHeaderWrapper}
-                                      >
-                                        <span className={styles.listItemHeader}>
-                                          {order.quantity} {order.unit}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className={styles.inputWrapper}>
-                                      <span
-                                        className={styles.listItemInputTitle}
-                                      >
-                                        Vendor Price :
+                                      <span className={styles.listItemtitle}>
+                                        {order.name}{' '}
+                                        <div className={styles.editIcon}>
+                                          <DeleteOutlined
+                                            onClick={() => {
+                                              setIsDeleteItemFromBillModalOpen(
+                                                true,
+                                              );
+                                              setCurrentDeleteItem({
+                                                billId: item._id,
+                                                item: order,
+                                              });
+                                            }}
+                                          />
+                                        </div>
                                       </span>
-                                      <div className={styles.innerInputWrapper}>
-                                        <Input
-                                          type="number"
-                                          placeholder="Enter vendor price"
-                                          value={
-                                            amounts[item._id]?.[order.name] ||
-                                            ''
-                                          }
-                                          onChange={(e) => {
-                                            setAmounts({
-                                              ...amounts,
-                                              [item._id]: {
-                                                ...(amounts[item._id] || {}),
-                                                [order.name]: parseFloat(
-                                                  e.target.value,
-                                                ),
-                                              },
-                                            });
-                                          }}
-                                        />
-                                      </div>
+                                    </div>
+                                    <div
+                                      className={styles.listItemHeaderWrapper}
+                                    >
+                                      <span className={styles.listItemHeader}>
+                                        {order.quantity} {order.unit}
+                                      </span>
                                     </div>
                                   </div>
-                                </List.Item>
-                              </>
+                                  <div className={styles.inputWrapper}>
+                                    <span className={styles.listItemInputTitle}>
+                                      Vendor Price :
+                                    </span>
+                                    <div className={styles.innerInputWrapper}>
+                                      <Input
+                                        type="number"
+                                        placeholder="Enter vendor price"
+                                        value={
+                                          amounts[item._id]?.[order.name] || ''
+                                        }
+                                        onChange={(e) => {
+                                          setAmounts({
+                                            ...amounts,
+                                            [item._id]: {
+                                              ...(amounts[item._id] || {}),
+                                              [order.name]: parseFloat(
+                                                e.target.value,
+                                              ),
+                                            },
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </List.Item>
                             );
                           })}
                         </List>
@@ -532,7 +525,7 @@ const GenerateBill = () => {
                   >
                     Save
                   </Button>
-                </>
+                </div>
               );
             })}
           </div>
