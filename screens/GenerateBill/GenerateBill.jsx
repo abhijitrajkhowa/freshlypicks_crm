@@ -6,6 +6,7 @@ import {
   DiffOutlined,
   SaveOutlined,
   EditOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import moment from 'moment';
@@ -42,6 +43,10 @@ const GenerateBill = () => {
   const [currentEditItemIndex, setCurrentEditItemIndex] = useState(null);
   const [currentRemarks, setCurrentRemarks] = useState('');
   const [isGettingVendorBills, setIsGettingVendorBills] = useState(false);
+  const [isDeleteItemFromBillModalOpen, setIsDeleteItemFromBillModalOpen] =
+    useState(false);
+  const [currentDeleteItem, setCurrentDeleteItem] = useState(null);
+  const [isDeletingItemFromBill, setIsDeletingItemFromBill] = useState(false);
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -200,6 +205,46 @@ const GenerateBill = () => {
       });
   };
 
+  const removeItemFromVendorBill = () => {
+    setIsDeletingItemFromBill(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/remove-item-from-vendor-bill`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          billId: currentDeleteItem.billId,
+          item: currentDeleteItem.item,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsDeletingItemFromBill(false);
+          setIsDeleteItemFromBillModalOpen(false);
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        getVendorBills();
+        setIsDeletingItemFromBill(false);
+        setIsDeleteItemFromBillModalOpen(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsDeletingItemFromBill(false);
+        setIsDeleteItemFromBillModalOpen(false);
+      });
+  };
+
   const saveVendorBill = (vendorBill) => {
     vendorBill.amount = getTotalAmount(vendorBill);
     setIsSavingBill(true);
@@ -276,6 +321,17 @@ const GenerateBill = () => {
 
   return (
     <>
+      <Modal
+        centered
+        title="Remove product ?"
+        open={isDeleteItemFromBillModalOpen}
+        okButtonProps={{ loading: isDeletingItemFromBill }}
+        onOk={() => {
+          removeItemFromVendorBill();
+        }}
+        onCancel={() => setIsDeleteItemFromBillModalOpen(false)}
+        okText="Remove"
+      ></Modal>
       <Modal
         centered
         title="Remarks"
@@ -406,7 +462,20 @@ const GenerateBill = () => {
                                         className={styles.listItemTitleWrapper}
                                       >
                                         <span className={styles.listItemtitle}>
-                                          {order.name}
+                                          {order.name}{' '}
+                                          <div className={styles.editIcon}>
+                                            <DeleteOutlined
+                                              onClick={() => {
+                                                setIsDeleteItemFromBillModalOpen(
+                                                  true,
+                                                );
+                                                setCurrentDeleteItem({
+                                                  billId: item._id,
+                                                  item: order,
+                                                });
+                                              }}
+                                            />
+                                          </div>
                                         </span>
                                       </div>
                                       <div
