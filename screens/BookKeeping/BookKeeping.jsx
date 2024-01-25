@@ -30,6 +30,7 @@ import {
   Space,
   Menu,
   Select,
+  Descriptions,
 } from 'antd';
 
 const BookKeeping = () => {
@@ -37,7 +38,7 @@ const BookKeeping = () => {
   const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(false);
+  const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(true);
   const [toggleModal, setToggleModal] = useState(false);
   const [modalData, setModalData] = useState([{}]);
   const [processedOrders, setProcessedOrders] = useState([]);
@@ -46,6 +47,9 @@ const BookKeeping = () => {
   const [vendorList, setVendorList] = useState([]);
   const [selectedBillItem, setSelectedBillItem] = useState({});
   const [isAddingToVendorBill, setIsAddingToVendorBill] = useState(false);
+  const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [vendorBills, setVendorBills] = useState([]);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -78,12 +82,20 @@ const BookKeeping = () => {
     cursor: 'pointer',
   };
 
+  const differentListItemChildStyle = {
+    cursor: 'pointer',
+    textDecoration: 'line-through',
+    color: 'gray',
+  };
+
   const modalStyle = {};
 
   const selectStyle = {
     width: '100%',
     margin: '16px 0 16px 0',
   };
+
+  const descriptionStyle = { width: '50%' };
 
   const dataSource = [
     {
@@ -120,26 +132,44 @@ const BookKeeping = () => {
       title: 'Items',
       dataIndex: 'items',
       key: 'items',
-      render: (items) => (
+      render: (items, record) => (
         <List
           size="small"
           bordered
           style={listItemStyle}
           dataSource={items}
-          renderItem={(item, index) => (
-            <List.Item
-              style={listItemChildStyle}
-              onClick={() => {
-                handleItemClick(item);
-              }}
-            >
-              {index + 1}. {item.name} -- {item.quantity} {item.unit}
-            </List.Item>
-          )}
+          renderItem={(item, index) => {
+            // Check if there's any order in any vendorBill that has the same orderId and name as the item
+            const isItemInVendorBills = vendorBills.some((vendorBill) =>
+              vendorBill.orders.some(
+                (order) =>
+                  order.orderIds?.includes(item.orderId) &&
+                  order.name === item.name,
+              ),
+            );
+
+            if (!item.orderId) {
+              item.orderId = record.id;
+            }
+
+            return (
+              <List.Item
+                style={
+                  isItemInVendorBills
+                    ? differentListItemChildStyle
+                    : listItemChildStyle
+                }
+                onClick={() => {
+                  if (!isItemInVendorBills) handleItemClick(item);
+                }}
+              >
+                {index + 1}. {item.name} -- {item.quantity} {item.unit}
+              </List.Item>
+            );
+          }}
         />
       ),
     },
-
     {
       title: 'Price',
       dataIndex: 'price',
@@ -167,6 +197,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Name"
           onChange={(e) => handleInputChange(e, index, 'name')}
         />
       ),
@@ -178,6 +209,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Address"
           onChange={(e) => handleInputChange(e, index, 'address')}
         />
       ),
@@ -189,6 +221,7 @@ const BookKeeping = () => {
       render: (text, record, index) => (
         <Input
           value={text}
+          placeholder="Items"
           onChange={(e) => handleInputChange(e, index, 'items')}
         />
       ),
@@ -201,6 +234,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Price"
           onChange={(e) => handleInputChange(e, index, 'total')}
         />
       ),
@@ -213,6 +247,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Delivery Charge"
           onChange={(e) => handleInputChange(e, index, 'deliveryCharge')}
         />
       ),
@@ -225,6 +260,7 @@ const BookKeeping = () => {
         <Input
           type="number"
           value={text}
+          placeholder="Discount"
           onChange={(e) => handleInputChange(e, index, 'discount')}
         />
       ),
@@ -263,6 +299,7 @@ const BookKeeping = () => {
           const onlyAddress = order.address.split('--')[0];
 
           newProcessedOrders[index] = {
+            id: order._id,
             key: index,
             index: index + 1,
             name: order.name,
@@ -277,6 +314,7 @@ const BookKeeping = () => {
         const onlyAddress = order.address?.split('--')[0];
 
         newProcessedOrders[index] = {
+          id: order._id,
           key: index,
           index: index + 1,
           name: order.name,
@@ -318,17 +356,49 @@ const BookKeeping = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          setIsImportButtonLoading(false);
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setIsImportButtonLoading(false);
+          setIsReloadButtonLoading(false);
+          setIsInitialLoading(false);
           return;
         }
         setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
         setOrders(data.orders);
       })
       .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
         setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
+      });
+  };
+
+  const getVendorBills = () => {
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-vendor-bill`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: new Date(date),
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          return;
+        }
+        setVendorBills(data.vendorBills);
+      })
+      .catch((err) => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
@@ -362,6 +432,7 @@ const BookKeeping = () => {
         }
         setIsAddingToVendorBill(false);
         setSelectedBillItem({});
+        getVendorBills();
         setVendorName('');
       })
       .catch((err) => {
@@ -414,6 +485,7 @@ const BookKeeping = () => {
   useEffect(() => {
     if (date) {
       getOrdersByDate();
+      getVendorBills();
     }
   }, [date]);
 
@@ -423,6 +495,7 @@ const BookKeeping = () => {
 
   useEffect(() => {
     getVendorsList();
+    getVendorBills();
   }, []);
 
   return (
@@ -493,19 +566,23 @@ const BookKeeping = () => {
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
-              value={dayjs(date)}
+              value={dayjs(date ? date : dayjs().format('YYYY-MM-DD'))}
               onChange={onDateChange}
               size="large"
             />
             <Button
               onClick={() => {
                 getOrdersByDate();
+                setIsReloadButtonLoading(true);
               }}
+              disabled={isInitialLoading}
+              loading={isReloadButtonLoading}
               icon={<SyncOutlined />}
               type="primary"
               size="large"
             >
-              Refresh
+              {isReloadButtonLoading && 'Refreshing'}
+              {!isReloadButtonLoading && 'Refresh'}
             </Button>
           </div>
           <div className={styles.switchWrapper}>
@@ -519,12 +596,31 @@ const BookKeeping = () => {
           </div>
           {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
           {!isImportButtonLoading && (
-            <Table
-              style={tableStyle}
-              dataSource={orders ? processedOrders : dataSource}
-              columns={columns}
-              rowClassName={styles.topAlignedRow}
-            />
+            <>
+              <Table
+                style={tableStyle}
+                dataSource={orders ? processedOrders : dataSource}
+                columns={columns}
+                rowClassName={styles.topAlignedRow}
+              />
+              <div className={styles.totalGovWrapper}>
+                <Descriptions
+                  bordered
+                  column={3}
+                  style={descriptionStyle}
+                  layout="vertical"
+                  title="Total Info"
+                >
+                  <Descriptions.Item label="Total Gov">
+                    ₹
+                    {orders
+                      .reduce((acc, order) => acc + order.total, 0)
+                      .toLocaleString()}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Total Cr">₹0</Descriptions.Item>
+                </Descriptions>
+              </div>
+            </>
           )}
         </div>
       </div>
