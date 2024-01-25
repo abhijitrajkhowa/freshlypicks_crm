@@ -113,6 +113,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
+    autoHideMenuBar: true,//will hide the menu bar but will show up if alt is pressed
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
