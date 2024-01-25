@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
+import _ from 'lodash';
 
 import {
   FloatButton,
@@ -412,6 +413,38 @@ const BookKeeping = () => {
       });
   };
 
+  const getOrdersByDateForBackground = () => {
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-orders-by-date`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+
+          return;
+        }
+
+        setOrders(data.orders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
   const getVendorBills = () => {
     window.electron
       .invoke('api-request', {
@@ -531,6 +564,7 @@ const BookKeeping = () => {
         }
         setIsCrSetting(false);
         setIsAddCrModalVisible(false);
+        debouncedGetOrders();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -540,6 +574,8 @@ const BookKeeping = () => {
         setIsAddCrModalVisible(false);
       });
   };
+
+  const debouncedGetOrders = _.debounce(getOrdersByDateForBackground, 5000);
 
   const deleteCr = (item) => {
     setIsDeletingCr(true);
