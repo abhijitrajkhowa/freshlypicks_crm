@@ -129,7 +129,7 @@ const BookKeeping = () => {
       title: 'Items',
       dataIndex: 'items',
       key: 'items',
-      render: (items) => (
+      render: (items, record) => (
         <List
           size="small"
           bordered
@@ -144,6 +144,10 @@ const BookKeeping = () => {
                   order.name === item.name,
               ),
             );
+
+            if (!item.orderId) {
+              item.orderId = record.id;
+            }
 
             return (
               <List.Item
@@ -292,6 +296,7 @@ const BookKeeping = () => {
           const onlyAddress = order.address.split('--')[0];
 
           newProcessedOrders[index] = {
+            id: order._id,
             key: index,
             index: index + 1,
             name: order.name,
@@ -306,6 +311,7 @@ const BookKeeping = () => {
         const onlyAddress = order.address?.split('--')[0];
 
         newProcessedOrders[index] = {
+          id: order._id,
           key: index,
           index: index + 1,
           name: order.name,
