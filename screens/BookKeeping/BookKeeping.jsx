@@ -48,6 +48,7 @@ const BookKeeping = () => {
   const [isAddingToVendorBill, setIsAddingToVendorBill] = useState(false);
   const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [vendorBills, setVendorBills] = useState([]);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -78,6 +79,12 @@ const BookKeeping = () => {
 
   const listItemChildStyle = {
     cursor: 'pointer',
+  };
+
+  const differentListItemChildStyle = {
+    cursor: 'pointer',
+    textDecoration: 'line-through',
+    color: 'gray',
   };
 
   const modalStyle = {};
@@ -128,20 +135,34 @@ const BookKeeping = () => {
           bordered
           style={listItemStyle}
           dataSource={items}
-          renderItem={(item, index) => (
-            <List.Item
-              style={listItemChildStyle}
-              onClick={() => {
-                handleItemClick(item);
-              }}
-            >
-              {index + 1}. {item.name} -- {item.quantity} {item.unit}
-            </List.Item>
-          )}
+          renderItem={(item, index) => {
+            // Check if there's any order in any vendorBill that has the same orderId and name as the item
+            const isItemInVendorBills = vendorBills.some((vendorBill) =>
+              vendorBill.orders.some(
+                (order) =>
+                  order.orderIds.includes(item.orderId) &&
+                  order.name === item.name,
+              ),
+            );
+
+            return (
+              <List.Item
+                style={
+                  isItemInVendorBills
+                    ? differentListItemChildStyle
+                    : listItemChildStyle
+                }
+                onClick={() => {
+                  if (!isItemInVendorBills) handleItemClick(item);
+                }}
+              >
+                {index + 1}. {item.name} -- {item.quantity} {item.unit}
+              </List.Item>
+            );
+          }}
         />
       ),
     },
-
     {
       title: 'Price',
       dataIndex: 'price',
@@ -349,6 +370,32 @@ const BookKeeping = () => {
       });
   };
 
+  const getVendorBills = () => {
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-vendor-bill`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: new Date(date),
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          return;
+        }
+        setVendorBills(data.vendorBills);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
   const addToVendorBill = (order) => {
     setIsAddingToVendorBill(true);
     const vendor = vendorList.find((vendor) => vendor.name === vendorName);
@@ -376,6 +423,7 @@ const BookKeeping = () => {
         }
         setIsAddingToVendorBill(false);
         setSelectedBillItem({});
+        getVendorBills();
         setVendorName('');
       })
       .catch((err) => {
@@ -428,6 +476,7 @@ const BookKeeping = () => {
   useEffect(() => {
     if (date) {
       getOrdersByDate();
+      getVendorBills();
     }
   }, [date]);
 
@@ -437,6 +486,7 @@ const BookKeeping = () => {
 
   useEffect(() => {
     getVendorsList();
+    getVendorBills();
   }, []);
 
   return (
