@@ -7,6 +7,7 @@ import {
   SaveOutlined,
   EditOutlined,
   DeleteOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import moment from 'moment';
@@ -311,6 +312,22 @@ const GenerateBill = () => {
     }
   };
 
+  const setAmountToZero = (billId) => {
+    // Create a new array with the updated vendor bill
+    const updatedVendorBills = vendorBills.map((bill) => {
+      if (bill._id === billId) {
+        // This is the bill we want to update
+        return { ...bill, amount: 0 };
+      } else {
+        // This is not the bill we want to update, so we return it as is
+        return bill;
+      }
+    });
+
+    // Update the state with the new array
+    setVendorBills(updatedVendorBills);
+  };
+
   useEffect(() => {
     getVendorsList();
   }, []);
@@ -414,7 +431,14 @@ const GenerateBill = () => {
                       {dayjs(item.date).format('DD-MM-YYYY')}
                     </Descriptions.Item>
                     <Descriptions.Item label="Amount">
-                      {getTotalAmount(item)}
+                      <div className={styles.amountWrapper}>
+                        {getTotalAmount(item)}
+                        <div className={styles.editIcon}>
+                          <CloseCircleOutlined
+                            onClick={() => setAmountToZero(item._id)}
+                          />
+                        </div>
+                      </div>
                     </Descriptions.Item>
                     <Descriptions.Item label="Paid">
                       <div className={styles.paidTextAndSwitchWrapper}>

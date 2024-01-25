@@ -7,6 +7,7 @@ import {
   PlusOutlined,
   SyncOutlined,
   DownOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
@@ -31,6 +32,7 @@ import {
   Menu,
   Select,
   Descriptions,
+  Popconfirm,
 } from 'antd';
 
 const BookKeeping = () => {
@@ -50,6 +52,11 @@ const BookKeeping = () => {
   const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [vendorBills, setVendorBills] = useState([]);
+  const [isAddCrModalVisible, setIsAddCrModalVisible] = useState(false);
+  const [currentAddCrItemIndex, setCurrentAddCrItemIndex] = useState(0);
+  const [currentSelectedCrItem, setCurrentSelectedCrItem] = useState({});
+  const [isCrSetting, setIsCrSetting] = useState(false);
+  const [isDeletingCr, setIsDeletingCr] = useState(false);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -179,13 +186,38 @@ const BookKeeping = () => {
       title: 'C.R',
       dataIndex: 'cr',
       key: 'cr',
-      render: (text, record, index) => (
-        <Input
-          type="number"
-          value={processedOrders[index]['cr']}
-          onChange={(e) => handleCrInputChange(e, index)}
-        />
-      ),
+      render: (text, record, index) => {
+        return record.cr === 0 ? (
+          <Button
+            onClick={() => {
+              setIsAddCrModalVisible(true);
+              setCurrentAddCrItemIndex(index);
+              setCurrentSelectedCrItem(record);
+            }}
+            icon={<PlusOutlined />}
+            type="primary"
+          >
+            Add C.R.
+          </Button>
+        ) : (
+          <div className={styles.crWrapper}>
+            {record.cr}
+            <div className={styles.editIcon}>
+              <Popconfirm
+                title="Delete the cr"
+                description="Are you sure to delete this cr value?"
+                okText="Yes"
+                cancelText="No"
+                placement="left"
+                onConfirm={() => deleteCr(record)}
+                okButtonProps={{ loading: isDeletingCr }}
+              >
+                <CloseCircleOutlined />
+              </Popconfirm>
+            </div>
+          </div>
+        );
+      },
     },
   ];
 
@@ -286,7 +318,8 @@ const BookKeeping = () => {
 
   const handleCrInputChange = (e, index) => {
     const newProcessedOrders = [...processedOrders];
-    newProcessedOrders[index]['cr'] = parseInt(e.target.value);
+    newProcessedOrders[index]['cr'] =
+      e.target.value === '' ? 0 : parseInt(e.target.value);
     setProcessedOrders(newProcessedOrders);
   };
 
@@ -306,7 +339,7 @@ const BookKeeping = () => {
             address: onlyAddress,
             items: order.items,
             price: order.total,
-            cr: 0,
+            cr: order.cr ? order.cr : 0,
           };
         });
     } else {
@@ -322,7 +355,7 @@ const BookKeeping = () => {
           items: order.items,
           quantity: order.items,
           price: order.total,
-          cr: 0,
+          cr: order.cr ? order.cr : 0,
         };
       });
     }
@@ -472,6 +505,75 @@ const BookKeeping = () => {
       });
   };
 
+  const setCr = () => {
+    setIsCrSetting(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/set-order-cr`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          orderId: currentSelectedCrItem.id,
+          cr: currentSelectedCrItem.cr,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsCrSetting(false);
+          setIsAddCrModalVisible(false);
+          return;
+        }
+        setIsCrSetting(false);
+        setIsAddCrModalVisible(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsCrSetting(false);
+        setIsAddCrModalVisible(false);
+      });
+  };
+
+  const deleteCr = (item) => {
+    setIsDeletingCr(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/delete-order-cr`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          orderId: item.id,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsDeletingCr(false);
+          return;
+        }
+        setIsDeletingCr(false);
+        getOrdersByDate();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsDeletingCr(false);
+      });
+  };
+
   const processVendorList = () => {
     const processedVendorList = vendorList?.map((vendor) => {
       return {
@@ -500,6 +602,24 @@ const BookKeeping = () => {
 
   return (
     <>
+      <Modal
+        centered
+        title="Add to C.R."
+        open={isAddCrModalVisible}
+        okButtonProps={{ loading: isCrSetting }}
+        onOk={() => {
+          setCr();
+        }}
+        onCancel={() => setIsAddCrModalVisible(false)}
+      >
+        {processedOrders[currentAddCrItemIndex] && (
+          <Input
+            type="number"
+            value={processedOrders[currentAddCrItemIndex]['cr']}
+            onChange={(e) => handleCrInputChange(e, currentAddCrItemIndex)}
+          />
+        )}
+      </Modal>
       <Modal
         centered
         title="Add to vendor bill"
@@ -617,7 +737,15 @@ const BookKeeping = () => {
                       .reduce((acc, order) => acc + order.total, 0)
                       .toLocaleString()}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Total Cr">₹0</Descriptions.Item>
+                  <Descriptions.Item label="Total Cr">
+                    ₹
+                    {orders
+                      .reduce(
+                        (acc, order) => acc + (order.cr ? order.cr : 0),
+                        0,
+                      )
+                      .toLocaleString()}
+                  </Descriptions.Item>
                 </Descriptions>
               </div>
             </>
