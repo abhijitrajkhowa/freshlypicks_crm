@@ -18,3 +18,24 @@
 .totalGovWrapper {
   padding: 0 16px 40px 16px;
 }
+
+.editIcon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.editIcon:hover {
+  color: #1890ff; /* Change to the color you want when hovering */
+}
+
+.editIcon:active {
+  transform: scale(0.9); /* Makes the icon slightly smaller when clicking */
+}
+
+.crWrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
