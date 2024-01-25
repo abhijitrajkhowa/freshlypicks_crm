@@ -30,6 +30,7 @@ import {
   Space,
   Menu,
   Select,
+  Descriptions,
 } from 'antd';
 
 const BookKeeping = () => {
@@ -94,6 +95,8 @@ const BookKeeping = () => {
     margin: '16px 0 16px 0',
   };
 
+  const descriptionStyle = { width: '50%' };
+
   const dataSource = [
     {
       key: '1',
@@ -140,7 +143,7 @@ const BookKeeping = () => {
             const isItemInVendorBills = vendorBills.some((vendorBill) =>
               vendorBill.orders.some(
                 (order) =>
-                  order.orderIds.includes(item.orderId) &&
+                  order.orderIds?.includes(item.orderId) &&
                   order.name === item.name,
               ),
             );
@@ -593,12 +596,31 @@ const BookKeeping = () => {
           </div>
           {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
           {!isImportButtonLoading && (
-            <Table
-              style={tableStyle}
-              dataSource={orders ? processedOrders : dataSource}
-              columns={columns}
-              rowClassName={styles.topAlignedRow}
-            />
+            <>
+              <Table
+                style={tableStyle}
+                dataSource={orders ? processedOrders : dataSource}
+                columns={columns}
+                rowClassName={styles.topAlignedRow}
+              />
+              <div className={styles.totalGovWrapper}>
+                <Descriptions
+                  bordered
+                  column={3}
+                  style={descriptionStyle}
+                  layout="vertical"
+                  title="Total Info"
+                >
+                  <Descriptions.Item label="Total Gov">
+                    ₹
+                    {orders
+                      .reduce((acc, order) => acc + order.total, 0)
+                      .toLocaleString()}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Total Cr">₹0</Descriptions.Item>
+                </Descriptions>
+              </div>
+            </>
           )}
         </div>
       </div>
