@@ -9,6 +9,8 @@ import {
   DownOutlined,
   CloseCircleOutlined,
   MinusCircleOutlined,
+  MobileOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
@@ -36,6 +38,7 @@ import {
   Descriptions,
   Popconfirm,
   Form,
+  Tabs,
 } from 'antd';
 
 const BookKeeping = () => {
@@ -64,6 +67,7 @@ const BookKeeping = () => {
   const [isAddRemarkModalVisible, setIsAddRemarkModalVisible] = useState(false);
   const [isAddingRemark, setIsAddingRemark] = useState(false);
   const [isAddingNewOfflineOrder, setIsAddingNewOfflineOrder] = useState(false);
+  const [activeTab, setActiveTab] = useState('1');
 
   const formRef = useRef();
 
@@ -80,7 +84,7 @@ const BookKeeping = () => {
   };
 
   const tableStyle = {
-    padding: '16px 16px 0 16px',
+    padding: '16px 0 0 0',
   };
 
   const listItemStyle = {
@@ -462,6 +466,46 @@ const BookKeeping = () => {
       });
   };
 
+  const getOfflineOrdersByDate = () => {
+    setIsImportButtonLoading(true);
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/get-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsImportButtonLoading(false);
+          setIsReloadButtonLoading(false);
+          setIsInitialLoading(false);
+          return;
+        }
+        setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
+        setOrders(data.offlineOrders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
+      });
+  };
+
   const getOrdersByDateForBackground = () => {
     const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
     window.electron
@@ -494,6 +538,36 @@ const BookKeeping = () => {
       });
   };
 
+  const getOfflineOrdersByDateForBackground = () => {
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/get-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        setOrders(data.offlineOrders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
   const addRemarkToOrder = () => {
     setIsAddingRemark(true);
     window.electron
@@ -506,6 +580,7 @@ const BookKeeping = () => {
         body: {
           orderId: currentSelectedCrItem.id,
           remark: currentSelectedCrItem.remark,
+          forOffline: activeTab === '2' ? true : false,
         },
       })
       .then((response) => {
@@ -521,7 +596,7 @@ const BookKeeping = () => {
 
         setIsAddingRemark(false);
         setIsAddRemarkModalVisible(false);
-        debouncedGetOrders();
+        activeTab === '1' ? debouncedGetOrders() : debouncedGetOfflineOrders();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -637,6 +712,7 @@ const BookKeeping = () => {
         body: {
           orderId: currentSelectedCrItem.id,
           cr: currentSelectedCrItem.cr,
+          forOffline: activeTab === '2' ? true : false,
         },
       })
       .then((response) => {
@@ -651,7 +727,7 @@ const BookKeeping = () => {
         }
         setIsCrSetting(false);
         setIsAddCrModalVisible(false);
-        debouncedGetOrders();
+        activeTab === '1' ? debouncedGetOrders() : debouncedGetOfflineOrders();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -663,6 +739,10 @@ const BookKeeping = () => {
   };
 
   const debouncedGetOrders = _.debounce(getOrdersByDateForBackground, 5000);
+  const debouncedGetOfflineOrders = _.debounce(
+    getOfflineOrdersByDateForBackground,
+    5000,
+  );
 
   const deleteCr = (item) => {
     setIsDeletingCr(true);
@@ -675,6 +755,7 @@ const BookKeeping = () => {
         },
         body: {
           orderId: item.id,
+          forOffline: activeTab === '2' ? true : false,
         },
       })
       .then((response) => {
@@ -687,7 +768,7 @@ const BookKeeping = () => {
           return;
         }
         setIsDeletingCr(false);
-        getOrdersByDate();
+        activeTab === '1' ? getOrdersByDate() : getOfflineOrdersByDate();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -761,6 +842,18 @@ const BookKeeping = () => {
     return processedVendorList;
   };
 
+  const fetchData = async (tabKey) => {
+    if (tabKey === '2') {
+      getOfflineOrdersByDate();
+    } else if (tabKey === '1') {
+      getOrdersByDate();
+    }
+  };
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+  };
+
   useEffect(() => {
     if (date) {
       getOrdersByDate();
@@ -776,6 +869,19 @@ const BookKeeping = () => {
     getVendorsList();
     getVendorBills();
   }, []);
+
+  const fetchDataDebounced = _.debounce(fetchData, 1000);
+
+  useEffect(() => {
+    // Call the debounced function
+    setIsImportButtonLoading(true);
+    fetchDataDebounced(activeTab);
+
+    // Cancel the debounced function in the cleanup function
+    return () => {
+      fetchDataDebounced.cancel();
+    };
+  }, [activeTab]);
 
   return (
     <>
@@ -1062,6 +1168,7 @@ const BookKeeping = () => {
               onClick={() => {
                 getOrdersByDate();
                 setIsReloadButtonLoading(true);
+                setActiveTab('1');
               }}
               disabled={isInitialLoading}
               loading={isReloadButtonLoading}
@@ -1073,51 +1180,108 @@ const BookKeeping = () => {
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
           </div>
-          <div className={styles.switchWrapper}>
-            <Switch
-              checked={isDeliveredFiltered}
-              onChange={toggleDeliveredFilter}
-              size="lare"
-              checkedChildren="Show All Orders"
-              unCheckedChildren="Show Delivered Orders"
-            />
-          </div>
           {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
-          {!isImportButtonLoading && (
-            <>
-              <Table
-                style={tableStyle}
-                dataSource={orders ? processedOrders : dataSource}
-                columns={columns}
-                rowClassName={styles.topAlignedRow}
-              />
-              <div className={styles.totalGovWrapper}>
-                <Descriptions
-                  bordered
-                  column={3}
-                  style={descriptionStyle}
-                  layout="vertical"
-                  title="Total Info"
-                >
-                  <Descriptions.Item label="Total Gov">
-                    ₹
-                    {orders
-                      .reduce((acc, order) => acc + order.total, 0)
-                      .toLocaleString()}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Total Cr">
-                    ₹
-                    {orders
-                      .reduce(
-                        (acc, order) => acc + (order.cr ? order.cr : 0),
-                        0,
-                      )
-                      .toLocaleString()}
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-            </>
-          )}
+          <>
+            <Tabs
+              style={{ padding: '0 16px' }}
+              defaultActiveKey="1"
+              activeKey={activeTab}
+              onChange={handleTabChange}
+              indicator={{ align: 'center' }}
+            >
+              <Tabs.TabPane
+                icon={<MobileOutlined />}
+                tab="Online orders"
+                key="1"
+              >
+                {!isImportButtonLoading && (
+                  <>
+                    <div className={styles.switchWrapper}>
+                      <Switch
+                        checked={isDeliveredFiltered}
+                        onChange={toggleDeliveredFilter}
+                        size="lare"
+                        checkedChildren="Show All Orders"
+                        unCheckedChildren="Show Delivered Orders"
+                      />
+                    </div>
+                    <Table
+                      style={tableStyle}
+                      dataSource={orders ? processedOrders : dataSource}
+                      columns={columns}
+                      rowClassName={styles.topAlignedRow}
+                    />
+                    <div className={styles.totalGovWrapper}>
+                      <Descriptions
+                        bordered
+                        column={3}
+                        style={descriptionStyle}
+                        layout="vertical"
+                        title="Total Info"
+                      >
+                        <Descriptions.Item label="Total Gov">
+                          ₹
+                          {orders
+                            .reduce((acc, order) => acc + order.total, 0)
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Total Cr">
+                          ₹
+                          {orders
+                            .reduce(
+                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                              0,
+                            )
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </>
+                )}
+              </Tabs.TabPane>
+              <Tabs.TabPane
+                icon={<ShopOutlined />}
+                tab="Offline orders"
+                key="2"
+              >
+                {!isImportButtonLoading && (
+                  <>
+                    <Table
+                      style={tableStyle}
+                      dataSource={orders ? processedOrders : dataSource}
+                      columns={columns}
+                      rowClassName={styles.topAlignedRow}
+                    />
+                    <div className={styles.totalGovWrapper}>
+                      <Descriptions
+                        bordered
+                        column={3}
+                        style={descriptionStyle}
+                        layout="vertical"
+                        title="Total Info"
+                      >
+                        <Descriptions.Item label="Total Gov">
+                          ₹
+                          {orders
+                            .reduce((acc, order) => acc + order.total, 0)
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Total Cr">
+                          ₹
+                          {orders
+                            .reduce(
+                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                              0,
+                            )
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </>
+                )}
+              </Tabs.TabPane>
+            </Tabs>
+          </>
         </div>
       </div>
     </>
