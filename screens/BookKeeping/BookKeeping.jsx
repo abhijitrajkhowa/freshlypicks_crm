@@ -58,6 +58,8 @@ const BookKeeping = () => {
   const [currentSelectedCrItem, setCurrentSelectedCrItem] = useState({});
   const [isCrSetting, setIsCrSetting] = useState(false);
   const [isDeletingCr, setIsDeletingCr] = useState(false);
+  const [isAddRemarkModalVisible, setIsAddRemarkModalVisible] = useState(false);
+  const [isAddingRemark, setIsAddingRemark] = useState(false);
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -182,6 +184,43 @@ const BookKeeping = () => {
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
+    },
+    {
+      title: 'Remark',
+      dataIndex: 'remark',
+      key: 'remark',
+      render: (text, record) => {
+        return record.remark ? (
+          <div className={styles.crWrapper}>
+            {record.remark}
+            <div className={styles.editIcon}>
+              <Popconfirm
+                title="Delete the remark"
+                description="Are you sure to delete this remark?"
+                okText="Yes"
+                cancelText="No"
+                placement="left"
+                onConfirm={() => {
+                  removeRemarkToOrder(record);
+                }}
+              >
+                <CloseCircleOutlined />
+              </Popconfirm>
+            </div>
+          </div>
+        ) : (
+          <Button
+            onClick={() => {
+              setCurrentSelectedCrItem(record);
+              setIsAddRemarkModalVisible(true);
+            }}
+            icon={<PlusOutlined />}
+            type="primary"
+          >
+            Add Remark
+          </Button>
+        );
+      },
     },
     {
       title: 'C.R',
@@ -341,6 +380,7 @@ const BookKeeping = () => {
             items: order.items,
             price: order.total,
             cr: order.cr ? order.cr : 0,
+            remark: order.remark,
           };
         });
     } else {
@@ -357,6 +397,7 @@ const BookKeeping = () => {
           quantity: order.items,
           price: order.total,
           cr: order.cr ? order.cr : 0,
+          remark: order.remark,
         };
       });
     }
@@ -437,6 +478,73 @@ const BookKeeping = () => {
         }
 
         setOrders(data.orders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  const addRemarkToOrder = () => {
+    setIsAddingRemark(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/add-remark-to-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          orderId: currentSelectedCrItem.id,
+          remark: currentSelectedCrItem.remark,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsAddingRemark(false);
+          setIsAddRemarkModalVisible(false);
+          return;
+        }
+
+        setIsAddingRemark(false);
+        setIsAddRemarkModalVisible(false);
+        debouncedGetOrders();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingRemark(false);
+        setIsAddRemarkModalVisible(false);
+      });
+  };
+
+  const removeRemarkToOrder = (record) => {
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/remove-remark-to-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          orderId: record.id,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        getOrdersByDate();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -638,6 +746,32 @@ const BookKeeping = () => {
 
   return (
     <>
+      <Modal
+        centered
+        title="Add remark"
+        open={isAddRemarkModalVisible}
+        okText="Add"
+        okButtonProps={{ loading: isAddingRemark }}
+        onOk={() => {
+          addRemarkToOrder();
+        }}
+        onCancel={() => setIsAddRemarkModalVisible(false)}
+      >
+        <Input.TextArea
+          value={currentSelectedCrItem.remark}
+          onChange={(e) => {
+            const newOrders = [...processedOrders];
+            newOrders.forEach((order) => {
+              if (order.id === currentSelectedCrItem.id) {
+                order.remark = e.target.value;
+              }
+            });
+            setProcessedOrders(newOrders);
+          }}
+          placeholder="Enter remark"
+          rows={2}
+        />
+      </Modal>
       <Modal
         centered
         title="Add to C.R."
