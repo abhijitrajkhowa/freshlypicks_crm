@@ -3,3 +3,4 @@ export const CLEAR_USER_DATA = 'CLEAR_USER_DATA';
 export const SET_LIGHT_THEME = 'SET_LIGHT_THEME';
 export const SET_DARK_THEME = 'SET_DARK_THEME';
 export const SET_COLOR_SCHEME = 'SET_COLOR_SCHEME';
+export const GET_ALL_PRODUCTS = 'GET_ALL_PRODUCTS';

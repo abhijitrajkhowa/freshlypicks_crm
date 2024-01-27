@@ -8,6 +8,7 @@ import {
   SyncOutlined,
   DownOutlined,
   CloseCircleOutlined,
+  MinusCircleOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
@@ -34,10 +35,12 @@ import {
   Select,
   Descriptions,
   Popconfirm,
+  Form,
 } from 'antd';
 
 const BookKeeping = () => {
   const user = useSelector((state) => state.user);
+  const products = useSelector((state) => state.products);
   const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
@@ -98,7 +101,9 @@ const BookKeeping = () => {
     color: 'gray',
   };
 
-  const modalStyle = {};
+  const modalStyle = {
+    margin: '24px 0',
+  };
 
   const selectStyle = {
     width: '100%',
@@ -106,6 +111,10 @@ const BookKeeping = () => {
   };
 
   const descriptionStyle = { width: '50%' };
+
+  const descriptionStyleForNewOrder = { width: '100%' };
+
+  const descriptionItemStyle = { verticalAlign: 'top' };
 
   const dataSource = [
     {
@@ -683,6 +692,12 @@ const BookKeeping = () => {
       });
   };
 
+  const onFinish = (values) => {
+    const newModalData = [...modalData];
+    newModalData[0].items = values.items;
+    setModalData(newModalData);
+  };
+
   const processVendorList = () => {
     const processedVendorList = vendorList?.map((vendor) => {
       return {
@@ -782,7 +797,6 @@ const BookKeeping = () => {
         style={modalStyle}
         width={'80%'}
         centered
-        title="Add record"
         okText="Add"
         onCancel={() => {
           setModalData([{}]);
@@ -793,20 +807,160 @@ const BookKeeping = () => {
             toast.error('Please fill up the form');
             return;
           }
+          if (
+            !modalData[0].name ||
+            !modalData[0].address ||
+            !modalData[0].items ||
+            !modalData[0].total ||
+            !modalData[0].deliveryCharge ||
+            !modalData[0].discount
+          ) {
+            toast.error('Please fill up the form');
+            return;
+          }
           setOrders([...orders, ...modalData]);
           setModalData([{}]);
           setToggleModal(false);
         }}
         open={toggleModal}
       >
-        <Table
+        {/* <Table
           pagination={false}
           dataSource={modalData}
           columns={modalTableColumns}
-        />
+        /> */}
+        <Descriptions
+          bordered
+          column={3}
+          style={descriptionStyleForNewOrder}
+          layout="vertical"
+          className={styles.descriptionParent}
+          title="Add record"
+        >
+          <Descriptions.Item label="Name" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].name}
+              placeholder="Name"
+              onChange={(e) => handleInputChange(e, 0, 'name')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Address" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].address}
+              placeholder="Address"
+              onChange={(e) => handleInputChange(e, 0, 'address')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Items" style={descriptionItemStyle}>
+            <Form
+              name="dynamic_form_nest_item"
+              onFinish={onFinish}
+              style={{ maxWidth: 600 }}
+              autoComplete="off"
+            >
+              <Form.List name="items">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space
+                        key={key}
+                        style={{
+                          display: 'flex',
+                          marginBottom: 8,
+                        }}
+                        align="baseline"
+                      >
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'product']}
+                          rules={[
+                            { required: true, message: 'Missing product' },
+                          ]}
+                        >
+                          <Select
+                            showSearch
+                            placeholder="Select a product"
+                            optionFilterProp="children"
+                            filterOption={(input, option) =>
+                              option.children
+                                .toLowerCase()
+                                .indexOf(input.toLowerCase()) >= 0
+                            }
+                          >
+                            {products.map((product, index) => (
+                              <Select.Option key={index} value={product._id}>
+                                {product.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'quantity']}
+                          rules={[
+                            { required: true, message: 'Missing quantity' },
+                          ]}
+                        >
+                          <Input placeholder="Quantity" type="numeric" />
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button
+                        type="dashed"
+                        onClick={() => add()}
+                        block
+                        icon={<PlusOutlined />}
+                      >
+                        Add Item
+                      </Button>
+                    </Form.Item>
+                    {fields.length > 0 && (
+                      <Form.Item>
+                        <Button type="primary" onClick={()=>{
+                          toast.success('Items added');
+                        }} htmlType="submit">
+                          Done
+                        </Button>
+                      </Form.Item>
+                    )}
+                  </>
+                )}
+              </Form.List>
+            </Form>
+          </Descriptions.Item>
+          <Descriptions.Item label="Price" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].total}
+              placeholder="Price"
+              onChange={(e) => handleInputChange(e, 0, 'total')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item
+            label="Delivery Charge"
+            style={descriptionItemStyle}
+          >
+            <Input
+              type="number"
+              value={modalData[0].deliveryCharge}
+              placeholder="Delivery Charge"
+              onChange={(e) => handleInputChange(e, 0, 'deliveryCharge')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Discount" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].discount}
+              placeholder="Discount"
+              onChange={(e) => handleInputChange(e, 0, 'discount')}
+            />
+          </Descriptions.Item>
+        </Descriptions>
       </Modal>
       <div className={styles.bookKeeping}>
-        {/* <FloatButton.Group
+        <FloatButton.Group
           trigger="click"
           type="primary"
           style={floatGroupStyle}
@@ -818,7 +972,7 @@ const BookKeeping = () => {
             tooltip="Add record"
             icon={<EditOutlined />}
           />
-        </FloatButton.Group> */}
+        </FloatButton.Group>
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
