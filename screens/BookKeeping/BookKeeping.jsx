@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './BookKeeping.module.css';
 import {
   CommentOutlined,
@@ -63,6 +63,9 @@ const BookKeeping = () => {
   const [isDeletingCr, setIsDeletingCr] = useState(false);
   const [isAddRemarkModalVisible, setIsAddRemarkModalVisible] = useState(false);
   const [isAddingRemark, setIsAddingRemark] = useState(false);
+  const [isAddingNewOfflineOrder, setIsAddingNewOfflineOrder] = useState(false);
+
+  const formRef = useRef();
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -115,6 +118,8 @@ const BookKeeping = () => {
   const descriptionStyleForNewOrder = { width: '100%' };
 
   const descriptionItemStyle = { verticalAlign: 'top' };
+
+  const paymentOptions = ['Cash', 'UPI', 'Card'];
 
   const dataSource = [
     {
@@ -692,6 +697,54 @@ const BookKeeping = () => {
       });
   };
 
+  const addOfflineOrder = () => {
+    setIsAddingNewOfflineOrder(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/add-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          order: {
+            ...modalData[0],
+            date: moment(date, 'YYYY-MM-DD').format('D/M/YYYY'),
+            dateObject: new Date(date),
+            time: moment().format('h:m:ss a'),
+            cr: 0,
+            remark: '',
+            discount: modalData[0].discount ? modalData[0].discount : 0,
+          },
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsAddingNewOfflineOrder(false);
+          setToggleModal(false);
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingNewOfflineOrder(false);
+        setToggleModal(false);
+        setModalData([{}]);
+        formRef.current.resetFields();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingNewOfflineOrder(false);
+        setToggleModal(false);
+      });
+  };
+
   const onFinish = (values) => {
     const newModalData = [...modalData];
     newModalData[0].items = values.items;
@@ -798,6 +851,7 @@ const BookKeeping = () => {
         width={'80%'}
         centered
         okText="Add"
+        okButtonProps={{ loading: isAddingNewOfflineOrder }}
         onCancel={() => {
           setModalData([{}]);
           setToggleModal(false);
@@ -812,15 +866,13 @@ const BookKeeping = () => {
             !modalData[0].address ||
             !modalData[0].items ||
             !modalData[0].total ||
-            !modalData[0].deliveryCharge ||
-            !modalData[0].discount
+            !modalData[0].payment ||
+            !modalData[0].phone
           ) {
             toast.error('Please fill up the form');
             return;
           }
-          setOrders([...orders, ...modalData]);
-          setModalData([{}]);
-          setToggleModal(false);
+          addOfflineOrder();
         }}
         open={toggleModal}
       >
@@ -853,6 +905,7 @@ const BookKeeping = () => {
           </Descriptions.Item>
           <Descriptions.Item label="Items" style={descriptionItemStyle}>
             <Form
+              ref={formRef}
               name="dynamic_form_nest_item"
               onFinish={onFinish}
               style={{ maxWidth: 600 }}
@@ -918,9 +971,13 @@ const BookKeeping = () => {
                     </Form.Item>
                     {fields.length > 0 && (
                       <Form.Item>
-                        <Button type="primary" onClick={()=>{
-                          toast.success('Items added');
-                        }} htmlType="submit">
+                        <Button
+                          type="primary"
+                          onClick={() => {
+                            toast.success('Items added');
+                          }}
+                          htmlType="submit"
+                        >
                           Done
                         </Button>
                       </Form.Item>
@@ -930,23 +987,20 @@ const BookKeeping = () => {
               </Form.List>
             </Form>
           </Descriptions.Item>
+          <Descriptions.Item label="Telephone" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].phone}
+              placeholder="Telephone"
+              onChange={(e) => handleInputChange(e, 0, 'phone')}
+            />
+          </Descriptions.Item>
           <Descriptions.Item label="Price" style={descriptionItemStyle}>
             <Input
               type="number"
               value={modalData[0].total}
               placeholder="Price"
               onChange={(e) => handleInputChange(e, 0, 'total')}
-            />
-          </Descriptions.Item>
-          <Descriptions.Item
-            label="Delivery Charge"
-            style={descriptionItemStyle}
-          >
-            <Input
-              type="number"
-              value={modalData[0].deliveryCharge}
-              placeholder="Delivery Charge"
-              onChange={(e) => handleInputChange(e, 0, 'deliveryCharge')}
             />
           </Descriptions.Item>
           <Descriptions.Item label="Discount" style={descriptionItemStyle}>
@@ -956,6 +1010,30 @@ const BookKeeping = () => {
               placeholder="Discount"
               onChange={(e) => handleInputChange(e, 0, 'discount')}
             />
+          </Descriptions.Item>
+          <Descriptions.Item label="Discount code" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].discountCode}
+              placeholder="Discount code"
+              onChange={(e) => handleInputChange(e, 0, 'discountCode')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Payment" style={descriptionItemStyle}>
+            <Select
+              allowClear
+              style={{ width: '100%' }}
+              value={modalData[0].payment}
+              placeholder="Select a payment option"
+              onChange={(value) =>
+                handleInputChange({ target: { value } }, 0, 'payment')
+              }
+            >
+              {paymentOptions.map((option, index) => (
+                <Select.Option key={index} value={option}>
+                  {option}
+                </Select.Option>
+              ))}
+            </Select>
           </Descriptions.Item>
         </Descriptions>
       </Modal>
