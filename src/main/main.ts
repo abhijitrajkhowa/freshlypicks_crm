@@ -55,6 +55,11 @@ ipcMain.handle('api-request', (event, options) => {
   });
 });
 
+ipcMain.handle('send-whatsapp-message', (event, number, message) => {
+  const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+  shell.openExternal(url);
+});
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';

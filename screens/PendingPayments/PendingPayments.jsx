@@ -43,6 +43,10 @@ const PendingPayments = () => {
   const [allPendingOrders, setAllPendingOrders] = useState([]);
   const [processedPendingOrders, setProcessedPendingOrders] = useState([]);
 
+  const sendMessage = (number, message) => {
+    window.electron.invoke('send-whatsapp-message', number, message);
+  };
+
   const tableStyle = {
     padding: '16px 16px 0 16px',
   };
@@ -112,32 +116,55 @@ const PendingPayments = () => {
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status, record) => {
-        return (
-          <Space size="middle">
-            <Popconfirm
-              title="Are you sure to change the status?"
-              onConfirm={() => {
-                changePaymentStatus(record._id, 'Paid');
-              }}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button type="primary" size="small">
-                Mark as Paid
-              </Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
-    },
-    {
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (text, record) => {
+        const menuItems = [
+          {
+            label: (
+              <Popconfirm
+                title="Are you sure to change the status?"
+                onConfirm={() => {
+                  changePaymentStatus(record._id, 'Paid');
+                }}
+                okText="Yes"
+                cancelText="No"
+              >
+                <a>Mark as Paid</a>
+              </Popconfirm>
+            ),
+            key: '1',
+          },
+          {
+            label: (
+              <a
+                onClick={(e) => {
+                  e.preventDefault();
+                  sendMessage(
+                    record.phone,
+                    `Dear ${record.name},\n\nYour order has been received and is being processed. We will notify you once your order is ready for delivery.\n\nThank you for shopping with us.\n\nFreshly Picks`,
+                  );
+                }}
+              >
+                Send Message
+              </a>
+            ),
+            key: '2',
+          },
+        ];
+        return (
+          <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+            <Button type="primary">
+              Actions <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
     },
   ];
 
