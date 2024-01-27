@@ -194,18 +194,12 @@ const BookKeeping = () => {
           <div className={styles.crWrapper}>
             {record.remark}
             <div className={styles.editIcon}>
-              <Popconfirm
-                title="Delete the remark"
-                description="Are you sure to delete this remark?"
-                okText="Yes"
-                cancelText="No"
-                placement="left"
-                onConfirm={() => {
-                  removeRemarkToOrder(record);
+              <EditOutlined
+                onClick={() => {
+                  setIsAddRemarkModalVisible(true);
+                  setCurrentSelectedCrItem(record);
                 }}
-              >
-                <CloseCircleOutlined />
-              </Popconfirm>
+              />
             </div>
           </div>
         ) : (
@@ -524,35 +518,6 @@ const BookKeeping = () => {
       });
   };
 
-  const removeRemarkToOrder = (record) => {
-    window.electron
-      .invoke('api-request', {
-        method: 'POST',
-        url: `${baseUrl}/crm/remove-remark-to-order`,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: {
-          orderId: record.id,
-        },
-      })
-      .then((response) => {
-        const data = JSON.parse(response.body);
-        if (response.status !== 200) {
-          toast.error(data.error, {
-            position: 'bottom-center',
-          });
-          return;
-        }
-        getOrdersByDate();
-      })
-      .catch((err) => {
-        toast.error(err.message, {
-          position: 'bottom-center',
-        });
-      });
-  };
-
   const getVendorBills = () => {
     window.electron
       .invoke('api-request', {
@@ -758,6 +723,7 @@ const BookKeeping = () => {
         onCancel={() => setIsAddRemarkModalVisible(false)}
       >
         <Input.TextArea
+          allowClear
           value={currentSelectedCrItem.remark}
           onChange={(e) => {
             const newOrders = [...processedOrders];
