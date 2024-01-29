@@ -965,6 +965,7 @@ const BookKeeping = () => {
         okButtonProps={{ loading: isAddingNewOfflineOrder }}
         onCancel={() => {
           setModalData([{}]);
+          formRef.current.resetFields();
           setToggleModal(false);
         }}
         onOk={() => {
