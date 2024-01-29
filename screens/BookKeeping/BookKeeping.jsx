@@ -815,6 +815,7 @@ const BookKeeping = () => {
         setIsAddingNewOfflineOrder(false);
         setToggleModal(false);
         setModalData([{}]);
+        getOfflineOrdersByDate();
         formRef.current.resetFields();
       })
       .catch((err) => {
@@ -920,7 +921,11 @@ const BookKeeping = () => {
         onOk={() => {
           setCr();
         }}
-        onCancel={() => setIsAddCrModalVisible(false)}
+        onCancel={() => {
+          setIsAddCrModalVisible(false);
+          const newOrders = [...processedOrders];
+          newOrders[currentAddCrItemIndex]['cr'] = 0;
+        }}
       >
         {processedOrders[currentAddCrItemIndex] && (
           <Input
