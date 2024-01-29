@@ -1065,7 +1065,10 @@ const BookKeeping = () => {
                             { required: true, message: 'Missing quantity' },
                           ]}
                         >
-                          <Input placeholder="Quantity" type="numeric" />
+                          <Input
+                            placeholder="Quantity (in gm's)"
+                            type="numeric"
+                          />
                         </Form.Item>
                         <MinusCircleOutlined onClick={() => remove(name)} />
                       </Space>
