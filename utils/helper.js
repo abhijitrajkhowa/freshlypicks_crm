@@ -1,4 +1,4 @@
-export const host = '192.168.1.5';
+export const host = '192.168.1.2';
 export const port = '8855';
 
 export const cloudinaryBaseUrl = 'https://api.cloudinary.com/v1_1/freshlypick';

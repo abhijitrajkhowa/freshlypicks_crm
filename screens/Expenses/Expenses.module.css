@@ -1,0 +1,27 @@
+.datePickerWrapper {
+  padding: 16px;
+  padding-bottom: 8px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.expensesWrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.expenseItemStyle {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.deleteButtonWrapper {
+  display: flex;
+  position: absolute;
+  top: 12px;
+  right: 8px;
+}

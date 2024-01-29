@@ -11,6 +11,7 @@ import {
   ReconciliationOutlined,
   LogoutOutlined,
   SmileOutlined,
+  MoneyCollectOutlined,
 } from '@ant-design/icons';
 import { Menu, Modal } from 'antd';
 import { useDispatch } from 'react-redux';
@@ -37,6 +38,7 @@ const items = [
   ),
   getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
   getItem('Customers', '/customers', <SmileOutlined />),
+  getItem('Expenses', '/expenses', <MoneyCollectOutlined />),
   getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
   {
     type: 'divider',

@@ -9,6 +9,7 @@ import GenerateBill from '../GenerateBill/GenerateBill';
 import Miscellaneous from '../Miscellaneous/Miscellaneous';
 import Setting from '../Setting/Setting';
 import Customers from '../Customers/Customers';
+import Expenses from '../Expenses/Expenses';
 
 import VerticalNavBar from '../../components/VerticalNavBar/VerticalNavBar';
 
@@ -28,6 +29,7 @@ const Home = () => {
             <Route path="miscellaneous" element={<Miscellaneous />} />
             <Route path="setting" element={<Setting />} />
             <Route path="customers" element={<Customers />} />
+            <Route path="expenses" element={<Expenses />} />
           </Routes>
         </div>
       </div>
