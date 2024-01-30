@@ -26,3 +26,9 @@
   top: 12px;
   right: 8px;
 }
+
+.advancedStatsWrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}

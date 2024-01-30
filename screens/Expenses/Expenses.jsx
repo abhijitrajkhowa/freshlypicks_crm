@@ -90,6 +90,13 @@ const Expenses = () => {
   const [selectedAccount, setSelectedAccount] = useState({});
   const [isSelectAccountModalVisible, setIsSelectAccountModalVisible] =
     useState(false);
+  const [needAdvancedStats, setNeedAdvancedStats] = useState(false);
+  const [month, setMonth] = useState(moment().format('YYYY-MM'));
+  const [selectedNameForAdvancedStats, setSelectedNameForAdvancedStats] =
+    useState('');
+  const [allExpensesByMonth, setAllExpensesByMonth] = useState([]);
+  const [isGettingAllExpensesByMonth, setIsGettingAllExpensesByMonth] =
+    useState(false);
 
   const onDateChange = (date, dateString) => {
     setDate(dateString);
@@ -573,6 +580,41 @@ const Expenses = () => {
       });
   };
 
+  const getAllExpenseByMonth = () => {
+    setIsGettingAllExpensesByMonth(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/get-all-expense-by-month-year`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          name: selectedNameForAdvancedStats,
+          month: month.split('-')[1],
+          year: month.split('-')[0],
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setAllExpensesByMonth([]);
+          setIsGettingAllExpensesByMonth(false);
+          return;
+        }
+        setAllExpensesByMonth(data.expenses);
+        setIsGettingAllExpensesByMonth(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setAllExpensesByMonth([]);
+        setIsGettingAllExpensesByMonth(false);
+      });
+  };
+
   const processExpenses = (expenses) => {
     let processedExpenses = [];
     expenses.forEach((expense, index) => {
@@ -585,6 +627,14 @@ const Expenses = () => {
       });
     });
     return processedExpenses;
+  };
+
+  const onMonthChange = (date, dateString) => {
+    if (dateString) {
+      setMonth(dateString);
+    } else {
+      setMonth(dayjs().format('YYYY-MM'));
+    }
   };
 
   useEffect(() => {
@@ -625,7 +675,6 @@ const Expenses = () => {
           </Form.Item>
         </Form>
       </Modal>
-
       {/* This is the modal that pops up when you click the "Generate expense"*/}
       <Modal
         centered
@@ -896,8 +945,14 @@ const Expenses = () => {
             </Button>
           </div>
           <div className={styles.expensesWrapper}>
+            <Switch
+              checked={needAdvancedStats}
+              checkedChildren="Don't need advanced statistics"
+              unCheckedChildren="Need advanced statistics"
+              onChange={(value) => setNeedAdvancedStats(value)}
+            />
             {isGettingAllExpenses && <Spin style={spinStyle} size="large" />}
-            {!isGettingAllExpenses && (
+            {!isGettingAllExpenses && !needAdvancedStats && (
               <>
                 {allExpenses.map((item, index) => {
                   const personalExpenseColumns = [
@@ -1162,6 +1217,64 @@ const Expenses = () => {
                     </div>
                   );
                 })}
+              </>
+            )}
+            {!isGettingAllExpenses && needAdvancedStats && (
+              <>
+                <div className={styles.advancedStatsWrapper}>
+                  <DatePicker
+                    picker="month"
+                    value={dayjs(month ? month : dayjs().format('YYYY-MM'))}
+                    onChange={onMonthChange}
+                    size="large"
+                  />
+                  <Select
+                    value={selectedNameForAdvancedStats || 'Select an account'}
+                    allowClear
+                    size="large"
+                    onChange={(value) => {
+                      setSelectedNameForAdvancedStats(value);
+                    }}
+                  >
+                    {allExpenseAccounts.map((item, index) => {
+                      return (
+                        <Select.Option key={index} value={item.name}>
+                          {item.name}
+                        </Select.Option>
+                      );
+                    })}
+                  </Select>
+                  <Button
+                    onClick={() => {
+                      getAllExpenseByMonth();
+                    }}
+                    loading={isGettingAllExpensesByMonth}
+                    type="primary"
+                    size="large"
+                    disabled={!selectedNameForAdvancedStats || !month}
+                  >
+                    Get advanced statistics
+                  </Button>
+                </div>
+                <div className={styles.allExpensesByMonth}>
+                  {allExpensesByMonth.length > 0 && (
+                    <>
+                      <Descriptions bordered>
+                        <Descriptions.Item label="Total personal expenses">
+                          {allExpensesByMonth.reduce(
+                            (acc, cur) =>
+                              acc +
+                              cur.personalExpense.reduce(
+                                (acc, cur) => acc + cur.amount,
+                                0,
+                              ),
+                            0,
+                          )}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>
