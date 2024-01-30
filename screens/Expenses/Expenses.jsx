@@ -63,9 +63,23 @@ const Expenses = () => {
   const [remarks, setRemarks] = useState('');
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [currentSelectedExpense, setCurrentSelectedExpense] = useState({});
+  const [currentSelectedExpenseItem, setCurrentSelectedExpenseItem] = useState(
+    {},
+  );
   const [
     isAddingCompanyExpenseModalVisible,
     setIsAddingCompanyExpenseModalVisible,
+  ] = useState(false);
+  const [isEditingPersonalExpense, setIsEditingPersonalExpense] =
+    useState(false);
+  const [
+    isEditPersonalExpenseModalVisible,
+    setIsEditPersonalExpenseModalVisible,
+  ] = useState(false);
+  const [isEditingCompanyExpense, setIsEditingCompanyExpense] = useState(false);
+  const [
+    isEditCompanyExpenseModalVisible,
+    setIsEditCompanyExpenseModalVisible,
   ] = useState(false);
 
   const onDateChange = (date, dateString) => {
@@ -83,29 +97,7 @@ const Expenses = () => {
     transform: 'translate(-50%)',
   };
 
-  const columns = [
-    {
-      title: 'Index No.',
-      dataIndex: 'index',
-      key: 'index',
-    },
-    {
-      title: 'Reason',
-      dataIndex: 'reason',
-      key: 'reason',
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-    },
-    {
-      title: 'Remark',
-      dataIndex: 'remarks',
-      key: 'remarks',
-    },
-  ];
-
+  //this is the main function that generates the expense
   const generateExpense = () => {
     setIsGeneratingExpense(true);
     window.electron
@@ -147,6 +139,7 @@ const Expenses = () => {
       });
   };
 
+  //this is the main function that gets all the expenses
   const getAllExpense = () => {
     setIsGettingAllExpenses(true);
     window.electron
@@ -187,6 +180,7 @@ const Expenses = () => {
       });
   };
 
+  //this is the main function that deletes the expense
   const deleteExpense = (item) => {
     setIsDeletingExpense(true);
     window.electron
@@ -197,7 +191,7 @@ const Expenses = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: item.name,
+          documentId: item._id,
         },
       })
       .then((response) => {
@@ -223,8 +217,9 @@ const Expenses = () => {
       });
   };
 
+  //this is the main function that adds the personal expense
   const addPersonalExpense = () => {
-    if (!reason || !amount || !remarks) {
+    if (!reason || !amount) {
       toast.error('All fields must be filled out', {
         position: 'bottom-center',
       });
@@ -239,7 +234,7 @@ const Expenses = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: currentSelectedExpense.name,
+          documentId: currentSelectedExpense._id,
           reason,
           amount,
           remarks,
@@ -280,8 +275,9 @@ const Expenses = () => {
       });
   };
 
+  //this is the main function that adds the company expense
   const addCompanyExpense = () => {
-    if (!reason || !amount || !remarks) {
+    if (!reason || !amount) {
       toast.error('All fields must be filled out', {
         position: 'bottom-center',
       });
@@ -296,7 +292,7 @@ const Expenses = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: currentSelectedExpense.name,
+          documentId: currentSelectedExpense._id,
           reason,
           amount,
           remarks,
@@ -337,10 +333,176 @@ const Expenses = () => {
       });
   };
 
+  //this is the main function that deletes the personal expense
+  const deletePersonalExpense = (record, item) => {
+    setCurrentSelectedExpense(item);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/delete-personal-expense`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          documentId: item._id,
+          expenseId: record._id,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        getAllExpense();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  //this is the main function that deletes the company expense
+  const deleteCompanyExpense = (record, item) => {
+    setCurrentSelectedExpense(item);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/delete-company-expense`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          documentId: item._id,
+          expenseId: record._id,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        getAllExpense();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  //this is the main function that edits the personal expense
+  const editPersonalExpense = () => {
+    setIsEditingPersonalExpense(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/edit-personal-expense`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          documentId: currentSelectedExpense._id,
+          expenseId: currentSelectedExpenseItem._id,
+          reason: reason,
+          amount: amount,
+          remarks: remarks,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsEditPersonalExpenseModalVisible(false);
+          setIsEditingPersonalExpense(false);
+
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setReason('');
+        setAmount('');
+        setRemarks('');
+        getAllExpense();
+        setIsEditPersonalExpenseModalVisible(false);
+        setIsEditingPersonalExpense(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsEditPersonalExpenseModalVisible(false);
+        setIsEditingPersonalExpense(false);
+      });
+  };
+
+  //this is the main function that edits the company expense
+  const editCompanyExpense = () => {
+    setIsEditingCompanyExpense(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/edit-company-expense`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          documentId: currentSelectedExpense._id,
+          expenseId: currentSelectedExpenseItem._id,
+          reason: reason,
+          amount: amount,
+          remarks: remarks,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsEditingCompanyExpense(false);
+          setIsEditCompanyExpenseModalVisible(false);
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setReason('');
+        setAmount('');
+        setRemarks('');
+        getAllExpense();
+        setIsEditCompanyExpenseModalVisible(false);
+        setIsEditingCompanyExpense(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsEditingCompanyExpense(false);
+        setIsEditCompanyExpenseModalVisible(false);
+      });
+  };
+
   const processExpenses = (expenses) => {
     let processedExpenses = [];
     expenses.forEach((expense, index) => {
       processedExpenses.push({
+        ...expense,
         index: index + 1,
         reason: expense.reason,
         amount: expense.amount,
@@ -362,6 +524,8 @@ const Expenses = () => {
 
   return (
     <>
+      {/* This is the modal that pops up when you click the "Generate expense"
+      button */}
       <Modal
         open={isGenerateExpenseModalVisible}
         title="Generate expense for?"
@@ -381,6 +545,8 @@ const Expenses = () => {
           placeholder="generate an expense for?"
         />
       </Modal>
+      {/* This is the modal that pops up when you click the "Add personal
+      expense" button */}
       <Modal
         centered
         title="Add personal expense"
@@ -426,6 +592,8 @@ const Expenses = () => {
           </Form.Item>
         </Form>
       </Modal>
+      {/* This is the modal that pops up when you click the "Add company expense"
+      button */}
       <Modal
         centered
         title="Add company expense"
@@ -439,6 +607,98 @@ const Expenses = () => {
           setAmount('');
           setRemarks('');
           setIsAddingCompanyExpenseModalVisible(false);
+        }}
+      >
+        <Form style={formStyle}>
+          <Form.Item label="Reason">
+            <Input.TextArea
+              rows={3}
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Amount">
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Remarks">
+            <Input.TextArea
+              rows={3}
+              value={remarks}
+              onChange={(e) => {
+                setRemarks(e.target.value);
+              }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+      {/* This is the modal that pops up when you click the "Edit personal expense" */}
+      <Modal
+        centered
+        title="Edit personal expense"
+        open={isEditPersonalExpenseModalVisible}
+        onOk={() => {
+          editPersonalExpense();
+        }}
+        okButtonProps={{ loading: isEditingPersonalExpense }}
+        onCancel={() => {
+          setReason('');
+          setAmount('');
+          setRemarks('');
+          setIsEditPersonalExpenseModalVisible(false);
+        }}
+      >
+        <Form style={formStyle}>
+          <Form.Item label="Reason">
+            <Input.TextArea
+              rows={3}
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Amount">
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="Remarks">
+            <Input.TextArea
+              rows={3}
+              value={remarks}
+              onChange={(e) => {
+                setRemarks(e.target.value);
+              }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+      {/* This is the modal that pops up when you click the "Edit company expense" */}
+      <Modal
+        centered
+        title="Edit company expense"
+        open={isEditCompanyExpenseModalVisible}
+        onOk={() => {
+          editCompanyExpense();
+        }}
+        okButtonProps={{ loading: isEditingCompanyExpense }}
+        onCancel={() => {
+          setReason('');
+          setAmount('');
+          setRemarks('');
+          setIsEditCompanyExpenseModalVisible(false);
         }}
       >
         <Form style={formStyle}>
@@ -509,6 +769,145 @@ const Expenses = () => {
             {!isGettingAllExpenses && (
               <>
                 {allExpenses.map((item, index) => {
+                  const personalExpenseColumns = [
+                    {
+                      title: 'Index No.',
+                      dataIndex: 'index',
+                      key: 'index',
+                      width: '10%',
+                    },
+                    {
+                      title: 'Reason',
+                      dataIndex: 'reason',
+                      key: 'reason',
+                      width: '30%',
+                    },
+                    {
+                      title: 'Amount',
+                      dataIndex: 'amount',
+                      key: 'amount',
+                      width: '20%',
+                    },
+                    {
+                      title: 'Remark',
+                      dataIndex: 'remarks',
+                      key: 'remarks',
+                      width: '30%',
+                    },
+                    {
+                      title: 'Action',
+                      key: 'action',
+                      width: '10%',
+                      render: (text, record) => (
+                        <Dropdown
+                          trigger={['click']}
+                          overlay={
+                            <Menu>
+                              <Menu.Item key="1">
+                                <Popconfirm
+                                  title="Are you sure to delete this expense?"
+                                  onConfirm={() =>
+                                    deletePersonalExpense(record, item)
+                                  }
+                                  okText="Yes"
+                                  cancelText="No"
+                                >
+                                  Delete
+                                </Popconfirm>
+                              </Menu.Item>
+                              <Menu.Item
+                                key="2"
+                                onClick={() => {
+                                  setReason(record.reason);
+                                  setAmount(record.amount);
+                                  setRemarks(record.remarks);
+                                  setIsEditPersonalExpenseModalVisible(true);
+                                  setCurrentSelectedExpenseItem(record);
+                                  setCurrentSelectedExpense(item);
+                                }}
+                              >
+                                Edit
+                              </Menu.Item>
+                            </Menu>
+                          }
+                        >
+                          <Button type="primary">
+                            Actions <DownOutlined />
+                          </Button>
+                        </Dropdown>
+                      ),
+                    },
+                  ];
+
+                  const companyExpenseColumns = [
+                    {
+                      title: 'Index No.',
+                      dataIndex: 'index',
+                      key: 'index',
+                      width: '10%',
+                    },
+                    {
+                      title: 'Reason',
+                      dataIndex: 'reason',
+                      key: 'reason',
+                      width: '30%',
+                    },
+                    {
+                      title: 'Amount',
+                      dataIndex: 'amount',
+                      key: 'amount',
+                      width: '20%',
+                    },
+                    {
+                      title: 'Remark',
+                      dataIndex: 'remarks',
+                      key: 'remarks',
+                      width: '30%',
+                    },
+                    {
+                      title: 'Action',
+                      key: 'action',
+                      width: '10%',
+                      render: (text, record) => (
+                        <Dropdown
+                          trigger={['click']}
+                          overlay={
+                            <Menu>
+                              <Menu.Item key="1">
+                                <Popconfirm
+                                  title="Are you sure to delete this expense?"
+                                  onConfirm={() =>
+                                    deleteCompanyExpense(record, item)
+                                  }
+                                  okText="Yes"
+                                  cancelText="No"
+                                >
+                                  Delete
+                                </Popconfirm>
+                              </Menu.Item>
+                              <Menu.Item
+                                key="2"
+                                onClick={() => {
+                                  setReason(record.reason);
+                                  setAmount(record.amount);
+                                  setRemarks(record.remarks);
+                                  setIsEditCompanyExpenseModalVisible(true);
+                                  setCurrentSelectedExpenseItem(record);
+                                  setCurrentSelectedExpense(item);
+                                }}
+                              >
+                                Edit
+                              </Menu.Item>
+                            </Menu>
+                          }
+                        >
+                          <Button type="primary">
+                            Actions <DownOutlined />
+                          </Button>
+                        </Dropdown>
+                      ),
+                    },
+                  ];
                   return (
                     <div key={index} className={styles.expenseItemStyle}>
                       <div className={styles.deleteButtonWrapper}>
@@ -544,7 +943,7 @@ const Expenses = () => {
                           {item.personalExpense.length > 0 && (
                             <Table
                               dataSource={processExpenses(item.personalExpense)}
-                              columns={columns}
+                              columns={personalExpenseColumns}
                               rowKey={(record, index) => index}
                               pagination={false}
                             />
@@ -565,7 +964,7 @@ const Expenses = () => {
                           {item.companyExpense.length > 0 && (
                             <Table
                               dataSource={processExpenses(item.companyExpense)}
-                              columns={columns}
+                              columns={companyExpenseColumns}
                               rowKey={(record, index) => index}
                               pagination={false}
                             />
