@@ -12,6 +12,7 @@ import {
   MobileOutlined,
   ShopOutlined,
   DeleteOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
@@ -85,6 +86,10 @@ const Expenses = () => {
     isEditCompanyExpenseModalVisible,
     setIsEditCompanyExpenseModalVisible,
   ] = useState(false);
+  const [allExpenseAccounts, setAllExpenseAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState({});
+  const [isSelectAccountModalVisible, setIsSelectAccountModalVisible] =
+    useState(false);
 
   const onDateChange = (date, dateString) => {
     setDate(dateString);
@@ -116,7 +121,7 @@ const Expenses = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: expenseName,
+          name: selectedAccount.name,
           date: new Date(date),
         },
       })
@@ -127,23 +132,23 @@ const Expenses = () => {
             position: 'bottom-center',
           });
           setIsGeneratingExpense(false);
-          setIsGenerateExpenseModalVisible(false);
+          setIsSelectAccountModalVisible(false);
           return;
         }
         toast.success(data.message, {
           position: 'bottom-center',
         });
         getAllExpense();
+        setSelectedAccount({});
         setIsGeneratingExpense(false);
-        setIsGenerateExpenseModalVisible(false);
-        setExpenseName('');
+        setIsSelectAccountModalVisible(false);
       })
       .catch((err) => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
         setIsGeneratingExpense(false);
-        setIsGenerateExpenseModalVisible(false);
+        setIsSelectAccountModalVisible(false);
       });
   };
 
@@ -506,6 +511,68 @@ const Expenses = () => {
       });
   };
 
+  const getAllExpenseAccounts = () => {
+    window.electron
+      .invoke('api-request', {
+        method: 'GET',
+        url: `${baseUrl}/crm/get-all-expense-accounts`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        setAllExpenseAccounts(data.expenseAccounts);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const setExpenseAccount = () => {
+    setIsGeneratingExpense(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/set-expense-account`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          name: expenseName,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsGeneratingExpense(false);
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setExpenseName('');
+        getAllExpenseAccounts();
+        setIsGeneratingExpense(false);
+        setIsGenerateExpenseModalVisible(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsGeneratingExpense(false);
+      });
+  };
+
   const processExpenses = (expenses) => {
     let processedExpenses = [];
     expenses.forEach((expense, index) => {
@@ -522,6 +589,7 @@ const Expenses = () => {
 
   useEffect(() => {
     getAllExpense();
+    getAllExpenseAccounts();
   }, []);
 
   useEffect(() => {
@@ -536,22 +604,67 @@ const Expenses = () => {
       button */}
       <Modal
         open={isGenerateExpenseModalVisible}
-        title="Generate expense for?"
+        title="Create expense account"
         onCancel={() => {
           setExpenseName('');
           setIsGenerateExpenseModalVisible(false);
         }}
         onOk={() => {
-          generateExpense();
+          setExpenseAccount();
         }}
         okButtonProps={{ loading: isGeneratingExpense }}
         centered
       >
-        <Input
-          value={expenseName}
-          onChange={(e) => setExpenseName(e.target.value)}
-          placeholder="generate an expense for?"
-        />
+        <Form>
+          <Form.Item style={formStyle} label="New account name">
+            <Input
+              value={expenseName}
+              onChange={(e) => setExpenseName(e.target.value)}
+              placeholder="account name"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* This is the modal that pops up when you click the "Generate expense"*/}
+      <Modal
+        centered
+        title="Generate expense"
+        open={isSelectAccountModalVisible}
+        onOk={() => {
+          generateExpense();
+        }}
+        okButtonProps={{
+          loading: isGeneratingExpense,
+          disabled: !selectedAccount.name,
+        }}
+        onCancel={() => {
+          setSelectedAccount({});
+          setIsSelectAccountModalVisible(false);
+        }}
+      >
+        <Form style={formStyle}>
+          <Form.Item label="Select an account">
+            <Select
+              value={selectedAccount.name || 'Select an account'}
+              allowClear
+              onChange={(value) => {
+                const account = allExpenseAccounts.find(
+                  (item) => item.name === value,
+                );
+                setSelectedAccount(account || {});
+              }}
+            >
+              {allExpenseAccounts.map((item, index) => {
+                return (
+                  <Select.Option key={index} value={item.name}>
+                    {item.name}
+                  </Select.Option>
+                );
+              })}
+            </Select>
+          </Form.Item>
+        </Form>
       </Modal>
       {/* This is the modal that pops up when you click the "Add personal
       expense" button */}
@@ -763,13 +876,23 @@ const Expenses = () => {
             </Button>
             <Button
               onClick={() => {
-                setIsGenerateExpenseModalVisible(true);
+                setIsSelectAccountModalVisible(true);
               }}
               type="primary"
               size="large"
             >
               <PlusOutlined />
               Generate expense
+            </Button>
+            <Button
+              onClick={() => {
+                setIsGenerateExpenseModalVisible(true);
+              }}
+              type="primary"
+              size="large"
+            >
+              <UserAddOutlined />
+              Create account
             </Button>
           </div>
           <div className={styles.expensesWrapper}>
