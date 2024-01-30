@@ -40,6 +40,10 @@ import {
   Popconfirm,
   Form,
   Tabs,
+  Statistic,
+  Row,
+  Col,
+  Card,
 } from 'antd';
 
 const Expenses = () => {
@@ -95,6 +99,10 @@ const Expenses = () => {
     top: '50%',
     left: '55%',
     transform: 'translate(-50%)',
+  };
+
+  const totalDescriptionStyle = {
+    marginTop: 16,
   };
 
   //this is the main function that generates the expense
@@ -980,6 +988,52 @@ const Expenses = () => {
                             <PlusOutlined />
                             Add company expense
                           </Button>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Statistics">
+                          <Row gutter={16}>
+                            <Col span={8}>
+                              <Card>
+                                <Statistic
+                                  prefix="₹"
+                                  title="Total personal expense"
+                                  value={item.personalExpense.reduce(
+                                    (acc, cur) => acc + cur.amount,
+                                    0,
+                                  )}
+                                />
+                              </Card>
+                            </Col>
+                            <Col span={8}>
+                              <Card>
+                                <Statistic
+                                  prefix="₹"
+                                  title="Total company expense"
+                                  value={item.companyExpense.reduce(
+                                    (acc, cur) => acc + cur.amount,
+                                    0,
+                                  )}
+                                />
+                              </Card>
+                            </Col>
+                            <Col span={8}>
+                              <Card>
+                                <Statistic
+                                  prefix="₹"
+                                  title="Total expense"
+                                  value={
+                                    item.companyExpense.reduce(
+                                      (acc, cur) => acc + cur.amount,
+                                      0,
+                                    ) +
+                                    item.personalExpense.reduce(
+                                      (acc, cur) => acc + cur.amount,
+                                      0,
+                                    )
+                                  }
+                                />
+                              </Card>
+                            </Col>
+                          </Row>
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
