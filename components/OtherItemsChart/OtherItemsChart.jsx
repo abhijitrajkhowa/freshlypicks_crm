@@ -57,6 +57,7 @@ import {
 const OtherItemsChart = () => {
   const orders = useSelector((state) => state.orders);
   const [selectedCategory, setSelectedCategory] = useState('Meat');
+  const [selectedRange, setSelectedRange] = useState('');
 
   const selectCategories = [
     {
@@ -100,6 +101,18 @@ const OtherItemsChart = () => {
   const processOrders = () => {
     const items = {};
     orders.forEach((order) => {
+      // const orderDate = moment(order.date, 'DD/MM/YYYY');
+      // if (
+      //   selectedRange &&
+      //   !orderDate.isBetween(
+      //     moment(selectedRange[0], 'DD/MM/YYYY'),
+      //     moment(selectedRange[1], 'DD/MM/YYYY'),
+      //     'day',
+      //     '[]',
+      //   )
+      // ) {
+      //   return;
+      // }
       order.items.forEach((item) => {
         if (
           selectedCategory === 'Meat'
@@ -113,17 +126,22 @@ const OtherItemsChart = () => {
               .replace(/small cut|medium cut|large cut/gi, '')
               .trim();
           }
+          const quantity = parseFloat(item.quantity);
           if (items[itemName]) {
-            items[itemName] += 1;
+            items[itemName].count += 1;
+            items[itemName].quantity += isNaN(quantity) ? 0 : quantity;
           } else {
-            items[itemName] = 1;
+            items[itemName] = {
+              count: 1,
+              quantity: isNaN(quantity) ? 0 : quantity,
+            };
           }
         }
       });
     });
 
     const processedOrders = Object.keys(items)
-      .map((name) => ({ name, count: items[name] }))
+      .map((name) => ({ name, ...items[name] }))
       .sort((a, b) => b.count - a.count);
 
     return processedOrders;
@@ -133,9 +151,15 @@ const OtherItemsChart = () => {
     if (active && payload && payload.length) {
       return (
         <div className={styles.customTooltip}>
-          <p
-            className={styles.tooltipLabel}
-          >{`${label} : ${payload[0].value}`}</p>
+          <p className={styles.tooltipLabel}>
+            {`Item: ${label}`}
+            <br />
+            {`Count: ${payload[0].value}`}
+            <br />
+            {`Total Quantity: ${(payload[0].payload.quantity / 1000).toFixed(
+              2,
+            )} kg`}
+          </p>
         </div>
       );
     }
@@ -147,11 +171,28 @@ const OtherItemsChart = () => {
     <>
       <div className={styles.otherItemsChart}>
         <div className={styles.selectWrapper}>
+          {/* <div className={styles.rangeSelectionWrapper}>
+            <DatePicker.RangePicker
+              className={styles.datePicker}
+              onChange={(date, dateString) => {
+                setSelectedRange(dateString);
+              }}
+              placeholder={['Start Date', 'End Date']}
+              format="DD-MM-YYYY"
+              value={
+                selectedRange
+                  ? [
+                      moment(selectedRange[0], 'DD-MM-YYYY'),
+                      moment(selectedRange[1], 'DD-MM-YYYY'),
+                    ]
+                  : null
+              }
+            />
+          </div> */}
           <Select
             className={styles.selectCategory}
             placeholder="Select Category"
             allowClear
-            size="large"
             showSearch
             style={{ width: 200 }}
             value={selectedCategory || 'Select Category'}
@@ -179,7 +220,7 @@ const OtherItemsChart = () => {
           <Legend />
           <Bar
             dataKey="count"
-            fill="#e63946"
+            fill="#fe5b3a"
             barSize={30}
             activeBar={<Rectangle fill="pink" stroke="blue" />}
           ></Bar>
