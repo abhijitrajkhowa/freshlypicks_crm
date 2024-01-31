@@ -637,6 +637,34 @@ const Expenses = () => {
     }
   };
 
+  // Separate function for calculating total personal expenses
+  const calculateTotalPersonalExpenses = (expenses) => {
+    return expenses.reduce(
+      (acc, cur) =>
+        acc + cur.personalExpense.reduce((acc, cur) => acc + cur.amount, 0),
+      0,
+    );
+  };
+
+  // Separate function for calculating total company expenses
+  const calculateTotalCompanyExpenses = (expenses) => {
+    return expenses.reduce(
+      (acc, cur) =>
+        acc + cur.companyExpense.reduce((acc, cur) => acc + cur.amount, 0),
+      0,
+    );
+  };
+
+  const calculateTotalExpenses = (expenses) => {
+    return expenses.reduce(
+      (acc, cur) =>
+        acc +
+        cur.personalExpense.reduce((acc, cur) => acc + cur.amount, 0) +
+        cur.companyExpense.reduce((acc, cur) => acc + cur.amount, 0),
+      0,
+    );
+  };
+
   useEffect(() => {
     getAllExpense();
     getAllExpenseAccounts();
@@ -647,6 +675,14 @@ const Expenses = () => {
       getAllExpense();
     }
   }, [date]);
+
+  const totalPersonalExpenses =
+    calculateTotalPersonalExpenses(allExpensesByMonth);
+
+  const totalCompanyExpenses =
+    calculateTotalCompanyExpenses(allExpensesByMonth);
+
+  const totalExpenses = calculateTotalExpenses(allExpensesByMonth);
 
   return (
     <>
@@ -1258,21 +1294,28 @@ const Expenses = () => {
                 </div>
                 <div className={styles.allExpensesByMonth}>
                   {allExpensesByMonth.length > 0 && (
-                    <>
-                      <Descriptions bordered>
-                        <Descriptions.Item label="Total personal expenses">
-                          {allExpensesByMonth.reduce(
-                            (acc, cur) =>
-                              acc +
-                              cur.personalExpense.reduce(
-                                (acc, cur) => acc + cur.amount,
-                                0,
-                              ),
-                            0,
-                          )}
-                        </Descriptions.Item>
-                      </Descriptions>
-                    </>
+                    <Card title="Statistics" bordered={true}>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <Statistic
+                            title="Total Personal Expenses (monthly)"
+                            value={totalPersonalExpenses}
+                          />
+                        </Col>
+                        <Col span={8}>
+                          <Statistic
+                            title="Total Company Expenses (monthly)"
+                            value={totalCompanyExpenses}
+                          />
+                        </Col>
+                        <Col span={8}>
+                          <Statistic
+                            title="Total Expenses (monthly)"
+                            value={totalExpenses}
+                          />
+                        </Col>
+                      </Row>
+                    </Card>
                   )}
                 </div>
               </>
