@@ -68,6 +68,7 @@ const BookKeeping = () => {
   const [isAddingRemark, setIsAddingRemark] = useState(false);
   const [isAddingNewOfflineOrder, setIsAddingNewOfflineOrder] = useState(false);
   const [activeTab, setActiveTab] = useState('1');
+  const [localChickenNetQuantity, setLocalChickenNetQuantity] = useState(0);
 
   const formRef = useRef();
 
@@ -636,6 +637,9 @@ const BookKeeping = () => {
   const addToVendorBill = (order) => {
     setIsAddingToVendorBill(true);
     const vendor = vendorList.find((vendor) => vendor.name === vendorName);
+    if (order.name?.includes('Local Chicken')) {
+      order.quantity = localChickenNetQuantity;
+    }
     window.electron
       .invoke('api-request', {
         method: 'POST',
@@ -652,22 +656,25 @@ const BookKeeping = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          setIsAddingToVendorBill(false);
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setLocalChickenNetQuantity(0);
+          setIsAddingToVendorBill(false);
           return;
         }
         setIsAddingToVendorBill(false);
         setSelectedBillItem({});
         getVendorBills();
+        setLocalChickenNetQuantity(0);
         setVendorName('');
       })
       .catch((err) => {
-        setIsAddingToVendorBill(false);
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setLocalChickenNetQuantity(0);
+        setIsAddingToVendorBill(false);
       });
   };
 
@@ -956,6 +963,26 @@ const BookKeeping = () => {
           onChange={(value) => setVendorName(value)}
           options={processVendorList()}
         />
+        {selectedBillItem.name?.includes('Local Chicken') && (
+          <Form>
+            <Form.Item label="Gross quantity">
+              <Input
+                type="number"
+                value={selectedBillItem.quantity}
+                disabled
+                placeholder="Gross quantity"
+              />
+            </Form.Item>
+            <Form.Item label="Net quantity">
+              <Input
+                type="number"
+                value={localChickenNetQuantity}
+                onChange={(e) => setLocalChickenNetQuantity(e.target.value)}
+                placeholder="Net quantity"
+              />
+            </Form.Item>
+          </Form>
+        )}
       </Modal>
       <Modal
         style={modalStyle}
@@ -988,11 +1015,6 @@ const BookKeeping = () => {
         }}
         open={toggleModal}
       >
-        {/* <Table
-          pagination={false}
-          dataSource={modalData}
-          columns={modalTableColumns}
-        /> */}
         <Descriptions
           bordered
           column={3}
