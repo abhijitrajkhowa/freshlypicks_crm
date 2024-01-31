@@ -1093,7 +1093,7 @@ const BookKeeping = () => {
                         >
                           <Input
                             placeholder="Quantity (in gm's)"
-                            type="numeric"
+                            type="number"
                           />
                         </Form.Item>
                         <MinusCircleOutlined onClick={() => remove(name)} />

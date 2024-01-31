@@ -56,7 +56,7 @@ import {
 
 const OtherItemsChart = () => {
   const orders = useSelector((state) => state.orders);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Meat');
 
   const selectCategories = [
     {
@@ -154,6 +154,7 @@ const OtherItemsChart = () => {
             size="large"
             showSearch
             style={{ width: 200 }}
+            value={selectedCategory || 'Select Category'}
             onChange={(value) => setSelectedCategory(value)}
           >
             {selectCategories.map((category) => (
