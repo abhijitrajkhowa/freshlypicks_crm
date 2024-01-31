@@ -952,7 +952,10 @@ const BookKeeping = () => {
         }}
         okButtonProps={{ disabled: !vendorName, loading: isAddingToVendorBill }}
         okText="Add"
-        onCancel={() => setIsItemModalVisible(false)}
+        onCancel={() => {
+          setIsItemModalVisible(false);
+          setLocalChickenNetQuantity(0);
+        }}
       >
         <Select
           value={vendorName || 'Select vendor'}
