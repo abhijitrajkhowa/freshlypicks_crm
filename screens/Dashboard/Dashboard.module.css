@@ -1,0 +1,17 @@
+.chartsWrapper {
+  display: flex;
+  padding: 24px 16px 0 16px;
+  gap: 16px;
+}
+
+.frozenItemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.otherItemsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
