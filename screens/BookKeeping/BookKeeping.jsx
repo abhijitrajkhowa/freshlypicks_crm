@@ -69,6 +69,7 @@ const BookKeeping = () => {
   const [isAddingNewOfflineOrder, setIsAddingNewOfflineOrder] = useState(false);
   const [activeTab, setActiveTab] = useState('1');
   const [localChickenNetQuantity, setLocalChickenNetQuantity] = useState(0);
+  const [searchedTerm, setSearchedTerm] = useState('');
 
   const formRef = useRef();
 
@@ -378,42 +379,36 @@ const BookKeeping = () => {
 
   const processOrders = () => {
     let newProcessedOrders = [];
-    if (isDeliveredFiltered) {
-      orders
-        .filter((order) => order.delivered)
-        .forEach((order, index) => {
-          const onlyAddress = order.address.split('--')[0];
+    let filteredOrders = orders;
 
-          newProcessedOrders[index] = {
-            id: order._id,
-            key: index,
-            index: index + 1,
-            name: order.name,
-            address: onlyAddress,
-            items: order.items,
-            price: order.total,
-            cr: order.cr ? order.cr : 0,
-            remark: order.remark,
-          };
-        });
-    } else {
-      orders.forEach((order, index) => {
-        const onlyAddress = order.address?.split('--')[0];
-
-        newProcessedOrders[index] = {
-          id: order._id,
-          key: index,
-          index: index + 1,
-          name: order.name,
-          address: onlyAddress,
-          items: order.items,
-          quantity: order.items,
-          price: order.total,
-          cr: order.cr ? order.cr : 0,
-          remark: order.remark,
-        };
-      });
+    if (searchedTerm) {
+      filteredOrders = orders.filter((order) =>
+        order.items.some((item) =>
+          item.name.toLowerCase().includes(searchedTerm.toLowerCase()),
+        ),
+      );
     }
+
+    if (isDeliveredFiltered) {
+      filteredOrders = filteredOrders.filter((order) => order.delivered);
+    }
+
+    filteredOrders.forEach((order, index) => {
+      const onlyAddress = order.address?.split('--')[0];
+
+      newProcessedOrders[index] = {
+        id: order._id,
+        key: index,
+        index: index + 1,
+        name: order.name,
+        address: onlyAddress,
+        items: order.items,
+        quantity: order.items,
+        price: order.total,
+        cr: order.cr ? order.cr : 0,
+        remark: order.remark,
+      };
+    });
 
     setProcessedOrders(newProcessedOrders);
   };
@@ -896,6 +891,10 @@ const BookKeeping = () => {
     };
   }, [activeTab]);
 
+  useEffect(() => {
+    processOrders();
+  }, [searchedTerm]);
+
   return (
     <>
       <Modal
@@ -1218,6 +1217,13 @@ const BookKeeping = () => {
               {isReloadButtonLoading && 'Refreshing'}
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
+            <Input.Search
+              placeholder="Search"
+              size="large"
+              allowClear
+              value={searchedTerm}
+              onChange={(e) => setSearchedTerm(e.target.value)}
+            />
           </div>
           {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
           <>
