@@ -634,9 +634,14 @@ const BookKeeping = () => {
   const addToVendorBill = (order) => {
     setIsAddingToVendorBill(true);
     const vendor = vendorList.find((vendor) => vendor.name === vendorName);
-    if (order.name?.includes('Local Chicken')) {
-      order.quantity = localChickenNetQuantity;
+
+    // Create a copy of the order object
+    const orderCopy = { ...order };
+
+    if (orderCopy.name?.includes('Local Chicken')) {
+      orderCopy.quantity = localChickenNetQuantity;
     }
+
     window.electron
       .invoke('api-request', {
         method: 'POST',
@@ -647,7 +652,7 @@ const BookKeeping = () => {
         body: {
           vendorId: vendor._id,
           date: new Date(date),
-          order: order,
+          order: orderCopy,
         },
       })
       .then((response) => {
@@ -972,20 +977,20 @@ const BookKeeping = () => {
         />
         {selectedBillItem.name?.includes('Local Chicken') && (
           <Form>
-            <Form.Item label="Gross quantity">
+            <Form.Item label="Order weight">
               <Input
                 type="number"
                 value={selectedBillItem.quantity}
                 disabled
-                placeholder="Gross quantity"
+                placeholder="Order weight"
               />
             </Form.Item>
-            <Form.Item label="Net quantity">
+            <Form.Item label="Actual weight">
               <Input
                 type="number"
                 value={localChickenNetQuantity}
                 onChange={(e) => setLocalChickenNetQuantity(e.target.value)}
-                placeholder="Net quantity"
+                placeholder="Actual weight"
               />
             </Form.Item>
           </Form>
