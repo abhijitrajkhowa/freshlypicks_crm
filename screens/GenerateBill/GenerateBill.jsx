@@ -49,6 +49,7 @@ const GenerateBill = () => {
     useState(false);
   const [currentDeleteItem, setCurrentDeleteItem] = useState(null);
   const [isDeletingItemFromBill, setIsDeletingItemFromBill] = useState(false);
+  const [updatedItems, setUpdatedItems] = useState({});
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -284,6 +285,7 @@ const GenerateBill = () => {
         toast.success(data.message, {
           position: 'bottom-center',
         });
+        getVendorBills();
         setCurrentRemarks('');
         setIsSavingBill(false);
       })
@@ -310,7 +312,8 @@ const GenerateBill = () => {
     let inputsAreEmpty = true;
 
     vendorBill.orders.forEach((order) => {
-      const inputValue = amounts[vendorBill._id]?.[order.name];
+      const inputValue =
+        order.customVendorPrice || amounts[vendorBill._id]?.[order.name];
       if (inputValue) {
         inputsAreEmpty = false;
         totalAmount += inputValue * order.quantity;
@@ -535,20 +538,52 @@ const GenerateBill = () => {
                                         <Input
                                           type="number"
                                           placeholder="Enter vendor price"
-                                          value={
-                                            amounts[item._id]?.[order.name] ||
-                                            ''
+                                          defaultValue={
+                                            order.customVendorPrice
+                                              ? order.customVendorPrice
+                                              : amounts[item._id]?.[
+                                                  order.name
+                                                ] || ''
                                           }
                                           onChange={(e) => {
-                                            setAmounts({
-                                              ...amounts,
+                                            const newVendorPrice = parseFloat(
+                                              e.target.value,
+                                            );
+
+                                            // Get the current state of the updatedItem object
+                                            const updatedItem = updatedItems[
+                                              item._id
+                                            ] || { ...item };
+
+                                            // Update the order object with the new vendor price
+                                            const updatedOrder = {
+                                              ...order,
+                                              customVendorPrice: newVendorPrice,
+                                            };
+
+                                            // Update the updatedItem object with the new order in its orders array
+                                            updatedItem.orders =
+                                              updatedItem.orders.map((o, i) =>
+                                                i === index ? updatedOrder : o,
+                                              );
+
+                                            // Update the amounts state
+                                            setAmounts((prevAmounts) => ({
+                                              ...prevAmounts,
                                               [item._id]: {
-                                                ...(amounts[item._id] || {}),
-                                                [order.name]: parseFloat(
-                                                  e.target.value,
-                                                ),
+                                                ...(prevAmounts[item._id] ||
+                                                  {}),
+                                                [order.name]: newVendorPrice,
                                               },
-                                            });
+                                            }));
+
+                                            // Update the updatedItems state
+                                            setUpdatedItems(
+                                              (prevUpdatedItems) => ({
+                                                ...prevUpdatedItems,
+                                                [item._id]: updatedItem,
+                                              }),
+                                            );
                                           }}
                                         />
                                       </div>
@@ -563,7 +598,9 @@ const GenerateBill = () => {
                     </Descriptions>
                     <Button
                       loading={isSavingBill}
-                      onClick={() => saveVendorBill(item)}
+                      onClick={() =>
+                        saveVendorBill(updatedItems[item._id] || item)
+                      }
                       icon={<SaveOutlined />}
                       type="primary"
                       size="large"
