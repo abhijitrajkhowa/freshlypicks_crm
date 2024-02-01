@@ -28,6 +28,7 @@ import {
   Switch,
   Icon,
   Spin,
+  Empty,
 } from 'antd';
 
 const GenerateBill = () => {
@@ -97,6 +98,15 @@ const GenerateBill = () => {
 
   const badgeWrapperStyle = {
     width: '80px',
+  };
+
+  const emptyComponentStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   };
 
   const getVendorsList = () => {
@@ -189,9 +199,9 @@ const GenerateBill = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          toast.error(data.error, {
-            position: 'bottom-center',
-          });
+          // toast.error(data.error, {
+          //   position: 'bottom-center',
+          // });
           setVendorBills([]);
           setIsGettingVendorBills(false);
           return;
@@ -413,6 +423,9 @@ const GenerateBill = () => {
           </div>
           <div className={styles.vendorBillsDisplayWrapper}>
             {isGettingVendorBills && <Spin style={spinStyle} size="large" />}
+            {!isGettingVendorBills && vendorBills.length === 0 && (
+              <Empty description="No bills found" style={emptyComponentStyle} />
+            )}
             {vendorBills &&
               vendorBills.map((item, index) => {
                 return (

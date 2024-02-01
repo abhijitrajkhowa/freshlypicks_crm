@@ -447,6 +447,7 @@ const BookKeeping = () => {
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setOrders([]);
           setIsImportButtonLoading(false);
           setIsReloadButtonLoading(false);
           setIsInitialLoading(false);
@@ -461,6 +462,7 @@ const BookKeeping = () => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setOrders([]);
         setIsImportButtonLoading(false);
         setIsReloadButtonLoading(false);
         setIsInitialLoading(false);
@@ -863,8 +865,11 @@ const BookKeeping = () => {
   };
 
   useEffect(() => {
-    if (date) {
+    if (date && activeTab === '1') {
       getOrdersByDate();
+      getVendorBills();
+    } else if (date && activeTab === '2') {
+      getOfflineOrdersByDate();
       getVendorBills();
     }
   }, [date]);

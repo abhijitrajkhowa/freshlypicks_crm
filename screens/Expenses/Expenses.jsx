@@ -45,6 +45,7 @@ import {
   Row,
   Col,
   Card,
+  Empty,
 } from 'antd';
 
 const Expenses = () => {
@@ -115,6 +116,15 @@ const Expenses = () => {
 
   const totalDescriptionStyle = {
     marginTop: 16,
+  };
+
+  const emptyComponentStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   };
 
   //this is the main function that generates the expense
@@ -988,6 +998,14 @@ const Expenses = () => {
               onChange={(value) => setNeedAdvancedStats(value)}
             />
             {isGettingAllExpenses && <Spin style={spinStyle} size="large" />}
+            {!isGettingAllExpenses &&
+              !needAdvancedStats &&
+              allExpenses.length === 0 && (
+                <Empty
+                  description="No expenses found"
+                  style={emptyComponentStyle}
+                />
+              )}
             {!isGettingAllExpenses && !needAdvancedStats && (
               <>
                 {allExpenses.map((item, index) => {
@@ -1267,6 +1285,7 @@ const Expenses = () => {
                   <Select
                     value={selectedNameForAdvancedStats || 'Select an account'}
                     allowClear
+                    style={{ width: 200 }}
                     size="large"
                     onChange={(value) => {
                       setSelectedNameForAdvancedStats(value);
@@ -1320,6 +1339,14 @@ const Expenses = () => {
                 </div>
               </>
             )}
+            {!isGettingAllExpenses &&
+              needAdvancedStats &&
+              allExpensesByMonth.length === 0 && (
+                <Empty
+                  description="No expenses found"
+                  style={emptyComponentStyle}
+                />
+              )}
           </div>
         </div>
       </div>
