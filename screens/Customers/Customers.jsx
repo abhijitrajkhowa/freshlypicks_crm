@@ -236,7 +236,7 @@ const Customers = () => {
   }, []);
 
   useEffect(() => {
-    getAllUsers(currentPage, pageSize);
+    getAllUsers(currentPage, pageSize, searchInput);
   }, [currentPage, pageSize]);
 
   return (
