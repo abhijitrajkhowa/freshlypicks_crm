@@ -42,6 +42,7 @@ const PendingPayments = () => {
   const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
   const [allPendingOrders, setAllPendingOrders] = useState([]);
   const [processedPendingOrders, setProcessedPendingOrders] = useState([]);
+  const [searchedTerm, setSearchedTerm] = useState('');
 
   const sendMessage = (number, message) => {
     window.electron.invoke('send-whatsapp-message', number, message);
@@ -203,27 +204,37 @@ const PendingPayments = () => {
 
   const processPendingOrders = () => {
     if (allPendingOrders.orders) {
-      const processedPendingOrders = allPendingOrders.orders.map(
-        (order, index) => {
-          const items = order.items.map((item, index) => {
-            return {
-              ...item,
-              key: index,
-            };
-          });
-          const onlyAddress = order.address.split('--')[0];
+      let processedPendingOrders = allPendingOrders.orders;
 
+      // If searchedTerm is not empty, filter the orders
+      if (searchedTerm.trim() !== '') {
+        processedPendingOrders = processedPendingOrders.filter(
+          (order) =>
+            order.name.toLowerCase().includes(searchedTerm.toLowerCase()) ||
+            order.phone.toLowerCase().includes(searchedTerm.toLowerCase()) ||
+            order.address.toLowerCase().includes(searchedTerm.toLowerCase()),
+        );
+      }
+
+      processedPendingOrders = processedPendingOrders.map((order, index) => {
+        const items = order.items.map((item, index) => {
           return {
-            ...order,
+            ...item,
             key: index,
-            index: index + 1,
-            items,
-            address: onlyAddress,
-            price: order.total.toLocaleString(),
-            status: order.paymentStatus,
           };
-        },
-      );
+        });
+        const onlyAddress = order.address.split('--')[0];
+
+        return {
+          ...order,
+          key: index,
+          index: index + 1,
+          items,
+          address: onlyAddress,
+          price: order.total.toLocaleString(),
+          status: order.paymentStatus,
+        };
+      });
 
       setProcessedPendingOrders(processedPendingOrders);
     }
@@ -265,7 +276,7 @@ const PendingPayments = () => {
 
   useEffect(() => {
     processPendingOrders();
-  }, [allPendingOrders]);
+  }, [allPendingOrders, searchedTerm]);
 
   return (
     <>
@@ -286,6 +297,12 @@ const PendingPayments = () => {
               {isReloadButtonLoading && 'Refreshing'}
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
+            <Input.Search
+              size="large"
+              placeholder="Search by name or phone number or address"
+              value={searchedTerm}
+              onChange={(e) => setSearchedTerm(e.target.value)}
+            />
           </div>
           <Table
             style={tableStyle}
