@@ -24,6 +24,7 @@ const Customers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(10);
   const [pageSize, setPageSize] = useState(10);
+  const [searchedTerm, setSearchedTerm] = useState('');
 
   const getAllUsers = (page = 1, limit = pageSize, searchTerm = '') => {
     setIsCustomerInfoLoading(true);
@@ -179,12 +180,69 @@ const Customers = () => {
     return processedData;
   };
 
-  const searchInputStyle = {};
+  const searchInputStyle = {
+    marginBottom: '8px',
+  };
 
   const descriptionItemStyle = { verticalAlign: 'top' };
   const moreInfoButtonStyle = {
     width: '100%',
   };
+
+  const userDataColumns = [
+    // {
+    //   title: 'Order Code',
+    //   dataIndex: 'code',
+    //   key: 'code',
+    // },
+    // {
+    //   title: 'Name',
+    //   dataIndex: 'name',
+    //   key: 'name',
+    // },
+    // {
+    //   title: 'Phone',
+    //   dataIndex: 'phone',
+    //   key: 'phone',
+    // },
+    // {
+    //   title: 'Address',
+    //   dataIndex: 'address',
+    //   key: 'address',
+    // },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+    },
+    {
+      title: 'Items',
+      dataIndex: 'items',
+      key: 'items',
+      render: (items) => (
+        <List
+          size="small"
+          bordered
+          dataSource={items}
+          renderItem={(item, index) => (
+            <List.Item key={index}>
+              {item.name} -- {item.quantity} {item.unit}
+            </List.Item>
+          )}
+        />
+      ),
+    },
+    {
+      title: 'Payment status',
+      dataIndex: 'paymentStatus',
+      key: 'paymentStatus',
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      key: 'total',
+    },
+  ];
 
   const columns = [
     {
@@ -231,6 +289,37 @@ const Customers = () => {
     },
   ];
 
+  function processUserOrders() {
+    let processedOrders = currentUserOrders
+      .map((order, index) => ({
+        key: index,
+        code: order.code,
+        name: order.name,
+        phone: order.phone,
+        address: order.address,
+        total: order.total,
+        date: order.date,
+        items: order.items,
+      }))
+      .sort(
+        (a, b) =>
+          new Date(b.date.split('/').reverse().join('-')) -
+          new Date(a.date.split('/').reverse().join('-')),
+      );
+
+    if (searchedTerm) {
+      processedOrders = processedOrders.filter(
+        (order) =>
+          order.date.includes(searchedTerm) ||
+          order.items.some((item) =>
+            item.name.toLowerCase().includes(searchedTerm.toLowerCase()),
+          ),
+      );
+    }
+
+    return processedOrders;
+  }
+
   useEffect(() => {
     getAllUsers();
   }, []);
@@ -238,6 +327,10 @@ const Customers = () => {
   useEffect(() => {
     getAllUsers(currentPage, pageSize, searchInput);
   }, [currentPage, pageSize]);
+
+  useEffect(() => {
+    processUserOrders();
+  }, [searchedTerm]);
 
   return (
     <>
@@ -278,12 +371,23 @@ const Customers = () => {
             />
           </Descriptions.Item>
           <Descriptions.Item
+            span={3}
             label="Most Ordered Product"
             style={descriptionItemStyle}
           >
             {currentCustomerInfo.mostOrderedProduct?.count > 0
               ? `${currentCustomerInfo.mostOrderedProduct.name} (${currentCustomerInfo.mostOrderedProduct.count})`
               : 'No orders yet'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Orders" style={descriptionItemStyle}>
+            <Input.Search
+              placeholder="Search by order date or product name"
+              allowClear
+              style={searchInputStyle}
+              value={searchedTerm}
+              onChange={(e) => setSearchedTerm(e.target.value)}
+            />
+            <Table columns={userDataColumns} dataSource={processUserOrders()} />
           </Descriptions.Item>
         </Descriptions>
       </Modal>
