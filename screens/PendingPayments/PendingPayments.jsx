@@ -122,6 +122,11 @@ const PendingPayments = () => {
       key: 'price',
     },
     {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+    },
+    {
       title: 'Action',
       key: 'action',
       render: (text, record) => {
