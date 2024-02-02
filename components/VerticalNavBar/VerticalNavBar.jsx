@@ -69,7 +69,7 @@ const VerticalNavBar = () => {
     {
       key: 'collapse',
       icon: isCollapsed ? <DoubleRightOutlined /> : <DoubleLeftOutlined />,
-      label: 'Collapse',
+      label: isCollapsed ? 'Expand' : 'Collapse',
     },
   ];
 
@@ -100,7 +100,7 @@ const VerticalNavBar = () => {
   const menuStyle = {
     display: 'flex',
     flexDirection: 'column',
-    // width: 256,
+    // width: 220,
     height: '100%',
     fontSize: '16px',
     paddingTop: 24,
