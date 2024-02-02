@@ -151,9 +151,18 @@ const PendingPayments = () => {
               <a
                 onClick={(e) => {
                   e.preventDefault();
+                  let greeting;
+                  const currentHour = moment().hour();
+                  if (currentHour < 12) {
+                    greeting = 'Good morning';
+                  } else if (currentHour < 18) {
+                    greeting = 'Good afternoon';
+                  } else {
+                    greeting = 'Good evening';
+                  }
                   sendMessage(
                     record.phone,
-                    `Dear ${record.name},\n\nYour order has been received and is being processed. We will notify you once your order is ready for delivery.\n\nThank you for shopping with us.\n\nFreshly Picks`,
+                    `${greeting} ${record.name},\n\nYour pending bill amount of *₹ ${record.total}* is due on ${record.date}.\n\nYou can pay us online through *GPAY no. 9101441959* (Surajit Rajkhowa). \n\nPlease settle at your earliest convenience.\n\nThank you,\nFreshlypicks`,
                   );
                 }}
               >
@@ -209,7 +218,11 @@ const PendingPayments = () => {
 
   const processPendingOrders = () => {
     if (allPendingOrders.orders) {
-      let processedPendingOrders = allPendingOrders.orders;
+      let processedPendingOrders = allPendingOrders.orders.sort(
+        (a, b) =>
+          new Date(b.date.split('/').reverse().join('-')) -
+          new Date(a.date.split('/').reverse().join('-')),
+      );
 
       // If searchedTerm is not empty, filter the orders
       if (searchedTerm.trim() !== '') {
