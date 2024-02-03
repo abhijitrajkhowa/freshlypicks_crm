@@ -4,6 +4,7 @@ import styles from './Customers.module.css';
 import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import moment from 'moment';
 
 import { SyncOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
@@ -214,6 +215,10 @@ const Customers = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      sorter: (a, b) =>
+        moment(a.date, 'DD/MM/YYYY').unix() -
+        moment(b.date, 'DD/MM/YYYY').unix(),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Items',

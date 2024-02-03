@@ -125,6 +125,10 @@ const PendingPayments = () => {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      sorter: (a, b) =>
+        moment(a.date, 'DD/MM/YYYY').unix() -
+        moment(b.date, 'DD/MM/YYYY').unix(),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Action',
