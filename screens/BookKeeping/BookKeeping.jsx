@@ -853,17 +853,11 @@ const BookKeeping = () => {
     return processedVendorList;
   };
 
-  const fetchData = () => {
-    if (
-      date !== lastFetchRef.current.date ||
-      activeTab !== lastFetchRef.current.activeTab
-    ) {
-      if (activeTab === '1') {
-        getOrdersByDate();
-      } else if (activeTab === '2') {
-        getOfflineOrdersByDate();
-      }
-      lastFetchRef.current = { date, activeTab };
+  const fetchData = async (tabKey) => {
+    if (tabKey === '2') {
+      getOfflineOrdersByDate();
+    } else if (tabKey === '1') {
+      getOrdersByDate();
     }
   };
 
@@ -873,7 +867,7 @@ const BookKeeping = () => {
 
   useEffect(() => {
     if (date && (activeTab === '1' || activeTab === '2')) {
-      fetchData();
+      fetchData(activeTab);
       getVendorBills();
     }
   }, [date, activeTab]);
