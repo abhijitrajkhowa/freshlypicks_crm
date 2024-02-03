@@ -28,6 +28,8 @@ import {
   Switch,
   Icon,
   Spin,
+  Empty,
+  Form,
 } from 'antd';
 
 const GenerateBill = () => {
@@ -48,6 +50,8 @@ const GenerateBill = () => {
     useState(false);
   const [currentDeleteItem, setCurrentDeleteItem] = useState(null);
   const [isDeletingItemFromBill, setIsDeletingItemFromBill] = useState(false);
+  const [updatedItems, setUpdatedItems] = useState({});
+  const [miscValue, setMiscValue] = useState('');
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -99,6 +103,15 @@ const GenerateBill = () => {
     width: '80px',
   };
 
+  const emptyComponentStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  };
+
   const getVendorsList = () => {
     window.electron
       .invoke('api-request', {
@@ -139,7 +152,7 @@ const GenerateBill = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: vendor.name,
+          name: vendorName === 'Misc' ? `Misc ${miscValue}` : vendor.name,
           vendorId: vendor._id,
           date: new Date(date),
           amount: 0,
@@ -153,6 +166,7 @@ const GenerateBill = () => {
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setMiscValue('');
           setIsGeneratingBill(false);
           setIsItemModalVisible(false);
           return;
@@ -160,6 +174,7 @@ const GenerateBill = () => {
         toast.success(data.message, {
           position: 'bottom-center',
         });
+        setMiscValue('');
         getVendorBills();
         setIsGeneratingBill(false);
         setIsItemModalVisible(false);
@@ -168,6 +183,7 @@ const GenerateBill = () => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setMiscValue('');
         setIsGeneratingBill(false);
         setIsItemModalVisible(false);
       });
@@ -189,9 +205,10 @@ const GenerateBill = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          toast.error(data.error, {
-            position: 'bottom-center',
-          });
+          // toast.error(data.error, {
+          //   position: 'bottom-center',
+          // });
+          setVendorBills([]);
           setIsGettingVendorBills(false);
           return;
         }
@@ -202,6 +219,7 @@ const GenerateBill = () => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setVendorBills([]);
         setIsGettingVendorBills(false);
       });
   };
@@ -272,6 +290,7 @@ const GenerateBill = () => {
         toast.success(data.message, {
           position: 'bottom-center',
         });
+        getVendorBills();
         setCurrentRemarks('');
         setIsSavingBill(false);
       })
@@ -298,7 +317,8 @@ const GenerateBill = () => {
     let inputsAreEmpty = true;
 
     vendorBill.orders.forEach((order) => {
-      const inputValue = amounts[vendorBill._id]?.[order.name];
+      const inputValue =
+        order.customVendorPrice || amounts[vendorBill._id]?.[order.name];
       if (inputValue) {
         inputsAreEmpty = false;
         totalAmount += inputValue * order.quantity;
@@ -375,19 +395,37 @@ const GenerateBill = () => {
         onOk={() => {
           generateBill();
         }}
-        okButtonProps={{ loading: isGeneratingBill }}
+        okButtonProps={{ loading: isGeneratingBill, disabled: !vendorName }}
         okText="Add"
-        onCancel={() => setIsItemModalVisible(false)}
+        onCancel={() => {
+          setIsItemModalVisible(false);
+          setMiscValue('');
+        }}
       >
         <Select
-          defaultValue="Select vendor"
+          value={vendorName || 'Select vendor'}
           size="large"
           style={selectStyle}
           allowClear
           loading={vendorList.length === 0}
-          onChange={(value) => setVendorName(value)}
+          onChange={(value) => {
+            setVendorName(value);
+            setMiscValue('');
+          }}
           options={processVendorList()}
         />
+        {vendorName === 'Misc' && (
+          <Form>
+            <Form.Item label="Misc additional name">
+              <Input
+                allowClear
+                value={miscValue}
+                onChange={(e) => setMiscValue(e.target.value)}
+                placeholder="Enter additional name for Misc"
+              />
+            </Form.Item>
+          </Form>
+        )}
       </Modal>
       <div className={styles.generateBill}>
         <div className={styles.mainContents}>
@@ -411,147 +449,190 @@ const GenerateBill = () => {
           </div>
           <div className={styles.vendorBillsDisplayWrapper}>
             {isGettingVendorBills && <Spin style={spinStyle} size="large" />}
-            {vendorBills.map((item, index) => {
-              return (
-                <div className={styles.billMainContents} key={index}>
-                  <Descriptions
-                    key={index}
-                    className={styles.descriptionParent}
-                    title={`${item.name}`}
-                    contentStyle={fontStyle}
-                    labelStyle={fontStyle}
-                    layout="vertical"
-                    column={5}
-                    bordered
-                  >
-                    <Descriptions.Item label="Vendor name">
-                      {item.name}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Date">
-                      {dayjs(item.date).format('DD-MM-YYYY')}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Amount">
-                      <div className={styles.amountWrapper}>
-                        {getTotalAmount(item)}
-                        <div className={styles.editIcon}>
-                          <CloseCircleOutlined
-                            onClick={() => setAmountToZero(item._id)}
-                          />
-                        </div>
-                      </div>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Paid">
-                      <div className={styles.paidTextAndSwitchWrapper}>
-                        <div style={badgeWrapperStyle}>
-                          {item.paid ? (
-                            <Badge status="success" text="Paid" />
-                          ) : (
-                            <Badge status="processing" text="Not paid" />
-                          )}
-                        </div>
-                        <Switch
-                          checked={item.paid}
-                          onChange={(checked) =>
-                            handleSwitchChange(index, checked)
-                          }
-                        />
-                      </div>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Remarks">
-                      <div className={styles.editRemarkWrapper}>
-                        <div>{item.remarks}</div>
-                        <div className={styles.editIcon}>
-                          <EditOutlined
-                            onClick={() => {
-                              setIsRemarksModalVisible(true);
-                              setCurrentRemarks(vendorBills[index].remarks);
-                              setCurrentEditItemIndex(index);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </Descriptions.Item>
-                    {item.orders.length > 0 && (
-                      <Descriptions.Item span={5} label="items">
-                        <List>
-                          {item.orders.map((order, index) => {
-                            return (
-                              <List.Item key={index}>
-                                <div className={styles.listItemMainWrapper}>
-                                  <div className={styles.titleAndHeaderWrapper}>
-                                    <div
-                                      className={styles.listItemTitleWrapper}
-                                    >
-                                      <span className={styles.listItemtitle}>
-                                        {order.name}{' '}
-                                        <div className={styles.editIcon}>
-                                          <DeleteOutlined
-                                            onClick={() => {
-                                              setIsDeleteItemFromBillModalOpen(
-                                                true,
-                                              );
-                                              setCurrentDeleteItem({
-                                                billId: item._id,
-                                                item: order,
-                                              });
-                                            }}
-                                          />
-                                        </div>
-                                      </span>
-                                    </div>
-                                    <div
-                                      className={styles.listItemHeaderWrapper}
-                                    >
-                                      <span className={styles.listItemHeader}>
-                                        {order.quantity} {order.unit}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className={styles.inputWrapper}>
-                                    <span className={styles.listItemInputTitle}>
-                                      Vendor Price :
-                                    </span>
-                                    <div className={styles.innerInputWrapper}>
-                                      <Input
-                                        type="number"
-                                        placeholder="Enter vendor price"
-                                        value={
-                                          amounts[item._id]?.[order.name] || ''
-                                        }
-                                        onChange={(e) => {
-                                          setAmounts({
-                                            ...amounts,
-                                            [item._id]: {
-                                              ...(amounts[item._id] || {}),
-                                              [order.name]: parseFloat(
-                                                e.target.value,
-                                              ),
-                                            },
-                                          });
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </List.Item>
-                            );
-                          })}
-                        </List>
+            {!isGettingVendorBills && vendorBills.length === 0 && (
+              <Empty description="No bills found" style={emptyComponentStyle} />
+            )}
+            {vendorBills &&
+              vendorBills.map((item, index) => {
+                return (
+                  <div className={styles.billMainContents} key={index}>
+                    <Descriptions
+                      key={index}
+                      className={styles.descriptionParent}
+                      title={`${item.name}`}
+                      contentStyle={fontStyle}
+                      labelStyle={fontStyle}
+                      layout="vertical"
+                      column={5}
+                      bordered
+                    >
+                      <Descriptions.Item label="Vendor name">
+                        {item.name}
                       </Descriptions.Item>
-                    )}
-                  </Descriptions>
-                  <Button
-                    loading={isSavingBill}
-                    onClick={() => saveVendorBill(item)}
-                    icon={<SaveOutlined />}
-                    type="primary"
-                    size="large"
-                  >
-                    Save
-                  </Button>
-                </div>
-              );
-            })}
+                      <Descriptions.Item label="Date">
+                        {dayjs(item.date).format('DD-MM-YYYY')}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Amount">
+                        <div className={styles.amountWrapper}>
+                          {getTotalAmount(item)}
+                          <div className={styles.editIcon}>
+                            <CloseCircleOutlined
+                              onClick={() => setAmountToZero(item._id)}
+                            />
+                          </div>
+                        </div>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Paid">
+                        <div className={styles.paidTextAndSwitchWrapper}>
+                          <div style={badgeWrapperStyle}>
+                            {item.paid ? (
+                              <Badge status="success" text="Paid" />
+                            ) : (
+                              <Badge status="processing" text="Not paid" />
+                            )}
+                          </div>
+                          <Switch
+                            checked={item.paid}
+                            onChange={(checked) =>
+                              handleSwitchChange(index, checked)
+                            }
+                          />
+                        </div>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Remarks">
+                        <div className={styles.editRemarkWrapper}>
+                          <div>{item.remarks}</div>
+                          <div className={styles.editIcon}>
+                            <EditOutlined
+                              onClick={() => {
+                                setIsRemarksModalVisible(true);
+                                setCurrentRemarks(vendorBills[index].remarks);
+                                setCurrentEditItemIndex(index);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </Descriptions.Item>
+                      {item.orders.length > 0 && (
+                        <Descriptions.Item span={5} label="items">
+                          <List>
+                            {item.orders.map((order, index) => {
+                              return (
+                                <List.Item key={index}>
+                                  <div className={styles.listItemMainWrapper}>
+                                    <div
+                                      className={styles.titleAndHeaderWrapper}
+                                    >
+                                      <div
+                                        className={styles.listItemTitleWrapper}
+                                      >
+                                        <span className={styles.listItemtitle}>
+                                          {order.name}{' '}
+                                          <div className={styles.editIcon}>
+                                            <DeleteOutlined
+                                              onClick={() => {
+                                                setIsDeleteItemFromBillModalOpen(
+                                                  true,
+                                                );
+                                                setCurrentDeleteItem({
+                                                  billId: item._id,
+                                                  item: order,
+                                                });
+                                              }}
+                                            />
+                                          </div>
+                                        </span>
+                                      </div>
+                                      <div
+                                        className={styles.listItemHeaderWrapper}
+                                      >
+                                        <span className={styles.listItemHeader}>
+                                          {order.quantity} {order.unit}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className={styles.inputWrapper}>
+                                      <span
+                                        className={styles.listItemInputTitle}
+                                      >
+                                        Vendor Price :
+                                      </span>
+                                      <div className={styles.innerInputWrapper}>
+                                        <Input
+                                          type="number"
+                                          placeholder="Enter vendor price"
+                                          defaultValue={
+                                            order.customVendorPrice
+                                              ? order.customVendorPrice
+                                              : amounts[item._id]?.[
+                                                  order.name
+                                                ] || ''
+                                          }
+                                          onChange={(e) => {
+                                            const newVendorPrice = parseFloat(
+                                              e.target.value,
+                                            );
+
+                                            // Get the current state of the updatedItem object
+                                            const updatedItem = updatedItems[
+                                              item._id
+                                            ] || { ...item };
+
+                                            // Update the order object with the new vendor price
+                                            const updatedOrder = {
+                                              ...order,
+                                              customVendorPrice: newVendorPrice,
+                                            };
+
+                                            // Update the updatedItem object with the new order in its orders array
+                                            updatedItem.orders =
+                                              updatedItem.orders.map((o, i) =>
+                                                i === index ? updatedOrder : o,
+                                              );
+
+                                            // Update the amounts state
+                                            setAmounts((prevAmounts) => ({
+                                              ...prevAmounts,
+                                              [item._id]: {
+                                                ...(prevAmounts[item._id] ||
+                                                  {}),
+                                                [order.name]: newVendorPrice,
+                                              },
+                                            }));
+
+                                            // Update the updatedItems state
+                                            setUpdatedItems(
+                                              (prevUpdatedItems) => ({
+                                                ...prevUpdatedItems,
+                                                [item._id]: updatedItem,
+                                              }),
+                                            );
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </List.Item>
+                              );
+                            })}
+                          </List>
+                        </Descriptions.Item>
+                      )}
+                    </Descriptions>
+                    <Button
+                      loading={isSavingBill}
+                      onClick={() =>
+                        saveVendorBill(updatedItems[item._id] || item)
+                      }
+                      icon={<SaveOutlined />}
+                      type="primary"
+                      size="large"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>

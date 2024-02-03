@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './BookKeeping.module.css';
 import {
   CommentOutlined,
@@ -8,6 +8,9 @@ import {
   SyncOutlined,
   DownOutlined,
   CloseCircleOutlined,
+  MinusCircleOutlined,
+  MobileOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import { baseUrl } from '../../utils/helper';
@@ -15,6 +18,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
+import _ from 'lodash';
 
 import {
   FloatButton,
@@ -33,10 +37,13 @@ import {
   Select,
   Descriptions,
   Popconfirm,
+  Form,
+  Tabs,
 } from 'antd';
 
 const BookKeeping = () => {
   const user = useSelector((state) => state.user);
+  const products = useSelector((state) => state.products);
   const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
@@ -57,6 +64,15 @@ const BookKeeping = () => {
   const [currentSelectedCrItem, setCurrentSelectedCrItem] = useState({});
   const [isCrSetting, setIsCrSetting] = useState(false);
   const [isDeletingCr, setIsDeletingCr] = useState(false);
+  const [isAddRemarkModalVisible, setIsAddRemarkModalVisible] = useState(false);
+  const [isAddingRemark, setIsAddingRemark] = useState(false);
+  const [isAddingNewOfflineOrder, setIsAddingNewOfflineOrder] = useState(false);
+  const [activeTab, setActiveTab] = useState('1');
+  const [localChickenNetQuantity, setLocalChickenNetQuantity] = useState(0);
+  const [searchedTerm, setSearchedTerm] = useState('');
+  const lastFetchRef = useRef({ date: null, activeTab: null });
+
+  const formRef = useRef();
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -71,7 +87,7 @@ const BookKeeping = () => {
   };
 
   const tableStyle = {
-    padding: '16px 16px 0 16px',
+    padding: '16px 0 0 0',
   };
 
   const listItemStyle = {
@@ -95,7 +111,9 @@ const BookKeeping = () => {
     color: 'gray',
   };
 
-  const modalStyle = {};
+  const modalStyle = {
+    margin: '24px 0',
+  };
 
   const selectStyle = {
     width: '100%',
@@ -103,6 +121,12 @@ const BookKeeping = () => {
   };
 
   const descriptionStyle = { width: '50%' };
+
+  const descriptionStyleForNewOrder = { width: '100%' };
+
+  const descriptionItemStyle = { verticalAlign: 'top' };
+
+  const paymentOptions = ['Cash', 'UPI', 'Card'];
 
   const dataSource = [
     {
@@ -181,6 +205,37 @@ const BookKeeping = () => {
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
+    },
+    {
+      title: 'Remark',
+      dataIndex: 'remark',
+      key: 'remark',
+      render: (text, record) => {
+        return record.remark ? (
+          <div className={styles.crWrapper}>
+            {record.remark}
+            <div className={styles.editIcon}>
+              <EditOutlined
+                onClick={() => {
+                  setIsAddRemarkModalVisible(true);
+                  setCurrentSelectedCrItem(record);
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <Button
+            onClick={() => {
+              setCurrentSelectedCrItem(record);
+              setIsAddRemarkModalVisible(true);
+            }}
+            icon={<PlusOutlined />}
+            type="primary"
+          >
+            Add Remark
+          </Button>
+        );
+      },
     },
     {
       title: 'C.R',
@@ -325,40 +380,36 @@ const BookKeeping = () => {
 
   const processOrders = () => {
     let newProcessedOrders = [];
-    if (isDeliveredFiltered) {
-      orders
-        .filter((order) => order.delivered)
-        .forEach((order, index) => {
-          const onlyAddress = order.address.split('--')[0];
+    let filteredOrders = orders;
 
-          newProcessedOrders[index] = {
-            id: order._id,
-            key: index,
-            index: index + 1,
-            name: order.name,
-            address: onlyAddress,
-            items: order.items,
-            price: order.total,
-            cr: order.cr ? order.cr : 0,
-          };
-        });
-    } else {
-      orders.forEach((order, index) => {
-        const onlyAddress = order.address?.split('--')[0];
-
-        newProcessedOrders[index] = {
-          id: order._id,
-          key: index,
-          index: index + 1,
-          name: order.name,
-          address: onlyAddress,
-          items: order.items,
-          quantity: order.items,
-          price: order.total,
-          cr: order.cr ? order.cr : 0,
-        };
-      });
+    if (searchedTerm) {
+      filteredOrders = orders.filter((order) =>
+        order.items.some((item) =>
+          item.name.toLowerCase().includes(searchedTerm.toLowerCase()),
+        ),
+      );
     }
+
+    if (isDeliveredFiltered) {
+      filteredOrders = filteredOrders.filter((order) => order.delivered);
+    }
+
+    filteredOrders.forEach((order, index) => {
+      const onlyAddress = order.address?.split('--')[0];
+
+      newProcessedOrders[index] = {
+        id: order._id,
+        key: index,
+        index: index + 1,
+        name: order.name,
+        address: onlyAddress,
+        items: order.items,
+        quantity: order.items,
+        price: order.total,
+        cr: order.cr ? order.cr : 0,
+        remark: order.remark,
+      };
+    });
 
     setProcessedOrders(newProcessedOrders);
   };
@@ -392,6 +443,7 @@ const BookKeeping = () => {
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setOrders([]);
           setIsImportButtonLoading(false);
           setIsReloadButtonLoading(false);
           setIsInitialLoading(false);
@@ -406,9 +458,151 @@ const BookKeeping = () => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setOrders([]);
         setIsImportButtonLoading(false);
         setIsReloadButtonLoading(false);
         setIsInitialLoading(false);
+      });
+  };
+
+  const getOfflineOrdersByDate = () => {
+    setIsImportButtonLoading(true);
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/get-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsImportButtonLoading(false);
+          setIsReloadButtonLoading(false);
+          setIsInitialLoading(false);
+          return;
+        }
+        setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
+        setOrders(data.offlineOrders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsImportButtonLoading(false);
+        setIsReloadButtonLoading(false);
+        setIsInitialLoading(false);
+      });
+  };
+
+  const getOrdersByDateForBackground = () => {
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/get-orders-by-date`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+
+          return;
+        }
+
+        setOrders(data.orders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  const getOfflineOrdersByDateForBackground = () => {
+    const formattedDate = moment(date, 'YYYY-MM-DD').format('D/M/YYYY');
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/get-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          date: formattedDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
+        }
+        setOrders(data.offlineOrders);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+      });
+  };
+
+  const addRemarkToOrder = () => {
+    setIsAddingRemark(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/add-remark-to-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          orderId: currentSelectedCrItem.id,
+          remark: currentSelectedCrItem.remark,
+          forOffline: activeTab === '2' ? true : false,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsAddingRemark(false);
+          setIsAddRemarkModalVisible(false);
+          return;
+        }
+
+        setIsAddingRemark(false);
+        setIsAddRemarkModalVisible(false);
+        activeTab === '1' ? debouncedGetOrders() : debouncedGetOfflineOrders();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingRemark(false);
+        setIsAddRemarkModalVisible(false);
       });
   };
 
@@ -441,6 +635,14 @@ const BookKeeping = () => {
   const addToVendorBill = (order) => {
     setIsAddingToVendorBill(true);
     const vendor = vendorList.find((vendor) => vendor.name === vendorName);
+
+    // Create a copy of the order object
+    const orderCopy = { ...order };
+
+    if (orderCopy.name?.includes('Local Chicken')) {
+      orderCopy.quantity = localChickenNetQuantity;
+    }
+
     window.electron
       .invoke('api-request', {
         method: 'POST',
@@ -449,30 +651,33 @@ const BookKeeping = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          vendorId: vendor._id,
+          billId: vendor._id,
           date: new Date(date),
-          order: order,
+          order: orderCopy,
         },
       })
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
-          setIsAddingToVendorBill(false);
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setLocalChickenNetQuantity(0);
+          setIsAddingToVendorBill(false);
           return;
         }
         setIsAddingToVendorBill(false);
         setSelectedBillItem({});
         getVendorBills();
+        setLocalChickenNetQuantity(0);
         setVendorName('');
       })
       .catch((err) => {
-        setIsAddingToVendorBill(false);
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setLocalChickenNetQuantity(0);
+        setIsAddingToVendorBill(false);
       });
   };
 
@@ -480,12 +685,12 @@ const BookKeeping = () => {
     window.electron
       .invoke('api-request', {
         method: 'POST',
-        url: `${baseUrl}/get-vendors-list`,
+        url: `${baseUrl}/crm/get-vendor-name-list-by-date`,
         headers: {
           'Content-Type': 'application/json',
         },
         body: {
-          managerId: user.id,
+          date: new Date(date),
         },
       })
       .then((response) => {
@@ -517,6 +722,7 @@ const BookKeeping = () => {
         body: {
           orderId: currentSelectedCrItem.id,
           cr: currentSelectedCrItem.cr,
+          forOffline: activeTab === '2' ? true : false,
         },
       })
       .then((response) => {
@@ -531,6 +737,7 @@ const BookKeeping = () => {
         }
         setIsCrSetting(false);
         setIsAddCrModalVisible(false);
+        activeTab === '1' ? debouncedGetOrders() : debouncedGetOfflineOrders();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -540,6 +747,12 @@ const BookKeeping = () => {
         setIsAddCrModalVisible(false);
       });
   };
+
+  const debouncedGetOrders = _.debounce(getOrdersByDateForBackground, 5000);
+  const debouncedGetOfflineOrders = _.debounce(
+    getOfflineOrdersByDateForBackground,
+    5000,
+  );
 
   const deleteCr = (item) => {
     setIsDeletingCr(true);
@@ -552,6 +765,7 @@ const BookKeeping = () => {
         },
         body: {
           orderId: item.id,
+          forOffline: activeTab === '2' ? true : false,
         },
       })
       .then((response) => {
@@ -564,7 +778,7 @@ const BookKeeping = () => {
           return;
         }
         setIsDeletingCr(false);
-        getOrdersByDate();
+        activeTab === '1' ? getOrdersByDate() : getOfflineOrdersByDate();
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -572,6 +786,61 @@ const BookKeeping = () => {
         });
         setIsDeletingCr(false);
       });
+  };
+
+  const addOfflineOrder = () => {
+    setIsAddingNewOfflineOrder(true);
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/add-offline-order`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          order: {
+            ...modalData[0],
+            date: moment(date, 'YYYY-MM-DD').format('D/M/YYYY'),
+            dateObject: new Date(date),
+            time: moment().format('h:m:ss a'),
+            cr: 0,
+            remark: '',
+            discount: modalData[0].discount ? modalData[0].discount : 0,
+          },
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setIsAddingNewOfflineOrder(false);
+          setToggleModal(false);
+          return;
+        }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingNewOfflineOrder(false);
+        setToggleModal(false);
+        setModalData([{}]);
+        getOfflineOrdersByDate();
+        formRef.current.resetFields();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setIsAddingNewOfflineOrder(false);
+        setToggleModal(false);
+      });
+  };
+
+  const onFinish = (values) => {
+    const newModalData = [...modalData];
+    newModalData[0].items = values.items;
+    setModalData(newModalData);
   };
 
   const processVendorList = () => {
@@ -584,15 +853,34 @@ const BookKeeping = () => {
     return processedVendorList;
   };
 
+  const fetchData = () => {
+    if (
+      date !== lastFetchRef.current.date ||
+      activeTab !== lastFetchRef.current.activeTab
+    ) {
+      if (activeTab === '1') {
+        getOrdersByDate();
+      } else if (activeTab === '2') {
+        getOfflineOrdersByDate();
+      }
+      lastFetchRef.current = { date, activeTab };
+    }
+  };
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+  };
+
   useEffect(() => {
-    if (date) {
-      getOrdersByDate();
+    if (date && (activeTab === '1' || activeTab === '2')) {
+      fetchData();
       getVendorBills();
     }
-  }, [date]);
+  }, [date, activeTab]);
 
   useEffect(() => {
     processOrders();
+    getVendorsList();
   }, [orders, isDeliveredFiltered]);
 
   useEffect(() => {
@@ -600,8 +888,52 @@ const BookKeeping = () => {
     getVendorBills();
   }, []);
 
+  const fetchDataDebounced = _.debounce(fetchData, 1000);
+
+  useEffect(() => {
+    // Call the debounced function
+    setIsImportButtonLoading(true);
+    fetchDataDebounced(activeTab);
+
+    // Cancel the debounced function in the cleanup function
+    return () => {
+      fetchDataDebounced.cancel();
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    processOrders();
+  }, [searchedTerm]);
+
   return (
     <>
+      <Modal
+        centered
+        title="Add remark"
+        open={isAddRemarkModalVisible}
+        okText="Add"
+        okButtonProps={{ loading: isAddingRemark }}
+        onOk={() => {
+          addRemarkToOrder();
+        }}
+        onCancel={() => setIsAddRemarkModalVisible(false)}
+      >
+        <Input.TextArea
+          allowClear
+          value={currentSelectedCrItem.remark}
+          onChange={(e) => {
+            const newOrders = [...processedOrders];
+            newOrders.forEach((order) => {
+              if (order.id === currentSelectedCrItem.id) {
+                order.remark = e.target.value;
+              }
+            });
+            setProcessedOrders(newOrders);
+          }}
+          placeholder="Enter remark"
+          rows={2}
+        />
+      </Modal>
       <Modal
         centered
         title="Add to C.R."
@@ -610,7 +942,11 @@ const BookKeeping = () => {
         onOk={() => {
           setCr();
         }}
-        onCancel={() => setIsAddCrModalVisible(false)}
+        onCancel={() => {
+          setIsAddCrModalVisible(false);
+          const newOrders = [...processedOrders];
+          newOrders[currentAddCrItemIndex]['cr'] = 0;
+        }}
       >
         {processedOrders[currentAddCrItemIndex] && (
           <Input
@@ -630,26 +966,50 @@ const BookKeeping = () => {
         }}
         okButtonProps={{ disabled: !vendorName, loading: isAddingToVendorBill }}
         okText="Add"
-        onCancel={() => setIsItemModalVisible(false)}
+        onCancel={() => {
+          setIsItemModalVisible(false);
+          setLocalChickenNetQuantity(0);
+        }}
       >
         <Select
           value={vendorName || 'Select vendor'}
           size="large"
           style={selectStyle}
           allowClear
-          loading={vendorList.length === 0}
+          loading={vendorList ? vendorList.length === 0 : true}
           onChange={(value) => setVendorName(value)}
           options={processVendorList()}
         />
+        {selectedBillItem.name?.includes('Local Chicken') && (
+          <Form>
+            <Form.Item label="Order weight">
+              <Input
+                type="number"
+                value={selectedBillItem.quantity}
+                disabled
+                placeholder="Order weight"
+              />
+            </Form.Item>
+            <Form.Item label="Actual weight">
+              <Input
+                type="number"
+                value={localChickenNetQuantity}
+                onChange={(e) => setLocalChickenNetQuantity(e.target.value)}
+                placeholder="Actual weight"
+              />
+            </Form.Item>
+          </Form>
+        )}
       </Modal>
       <Modal
         style={modalStyle}
         width={'80%'}
         centered
-        title="Add record"
         okText="Add"
+        okButtonProps={{ loading: isAddingNewOfflineOrder }}
         onCancel={() => {
           setModalData([{}]);
+          formRef.current.resetFields();
           setToggleModal(false);
         }}
         onOk={() => {
@@ -657,17 +1017,179 @@ const BookKeeping = () => {
             toast.error('Please fill up the form');
             return;
           }
-          setOrders([...orders, ...modalData]);
-          setModalData([{}]);
-          setToggleModal(false);
+          if (
+            !modalData[0].name ||
+            !modalData[0].address ||
+            !modalData[0].items ||
+            !modalData[0].total ||
+            !modalData[0].payment ||
+            !modalData[0].phone
+          ) {
+            toast.error('Please fill up the form');
+            return;
+          }
+          addOfflineOrder();
         }}
         open={toggleModal}
       >
-        <Table
-          pagination={false}
-          dataSource={modalData}
-          columns={modalTableColumns}
-        />
+        <Descriptions
+          bordered
+          column={3}
+          style={descriptionStyleForNewOrder}
+          layout="vertical"
+          className={styles.descriptionParent}
+          title="Add record"
+        >
+          <Descriptions.Item label="Name" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].name}
+              placeholder="Name"
+              onChange={(e) => handleInputChange(e, 0, 'name')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Address" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].address}
+              placeholder="Address"
+              onChange={(e) => handleInputChange(e, 0, 'address')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Items" style={descriptionItemStyle}>
+            <Form
+              ref={formRef}
+              name="dynamic_form_nest_item"
+              onFinish={onFinish}
+              style={{ maxWidth: 600 }}
+              autoComplete="off"
+            >
+              <Form.List name="items">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space
+                        key={key}
+                        style={{
+                          display: 'flex',
+                          marginBottom: 8,
+                        }}
+                        align="baseline"
+                      >
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'product']}
+                          rules={[
+                            { required: true, message: 'Missing product' },
+                          ]}
+                        >
+                          <Select
+                            showSearch
+                            placeholder="Select a product"
+                            optionFilterProp="children"
+                            filterOption={(input, option) =>
+                              option.children
+                                .toLowerCase()
+                                .indexOf(input.toLowerCase()) >= 0
+                            }
+                          >
+                            {products.map((product, index) => (
+                              <Select.Option key={index} value={product._id}>
+                                {product.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'quantity']}
+                          rules={[
+                            { required: true, message: 'Missing quantity' },
+                          ]}
+                        >
+                          <Input
+                            placeholder="Quantity (in gm's)"
+                            type="number"
+                          />
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button
+                        type="dashed"
+                        onClick={() => add()}
+                        block
+                        icon={<PlusOutlined />}
+                      >
+                        Add Item
+                      </Button>
+                    </Form.Item>
+                    {fields.length > 0 && (
+                      <Form.Item>
+                        <Button
+                          type="primary"
+                          onClick={() => {
+                            toast.success('Items added');
+                          }}
+                          htmlType="submit"
+                        >
+                          Done
+                        </Button>
+                      </Form.Item>
+                    )}
+                  </>
+                )}
+              </Form.List>
+            </Form>
+          </Descriptions.Item>
+          <Descriptions.Item label="Telephone" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].phone}
+              placeholder="Telephone"
+              onChange={(e) => handleInputChange(e, 0, 'phone')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Price" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].total}
+              placeholder="Price"
+              onChange={(e) => handleInputChange(e, 0, 'total')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Discount" style={descriptionItemStyle}>
+            <Input
+              type="number"
+              value={modalData[0].discount}
+              placeholder="Discount"
+              onChange={(e) => handleInputChange(e, 0, 'discount')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Discount code" style={descriptionItemStyle}>
+            <Input
+              value={modalData[0].discountCode}
+              placeholder="Discount code"
+              onChange={(e) => handleInputChange(e, 0, 'discountCode')}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="Payment" style={descriptionItemStyle}>
+            <Select
+              allowClear
+              style={{ width: '100%' }}
+              value={modalData[0].payment}
+              placeholder="Select a payment option"
+              onChange={(value) =>
+                handleInputChange({ target: { value } }, 0, 'payment')
+              }
+            >
+              {paymentOptions.map((option, index) => (
+                <Select.Option key={index} value={option}>
+                  {option}
+                </Select.Option>
+              ))}
+            </Select>
+          </Descriptions.Item>
+        </Descriptions>
       </Modal>
       <div className={styles.bookKeeping}>
         <FloatButton.Group
@@ -694,6 +1216,7 @@ const BookKeeping = () => {
               onClick={() => {
                 getOrdersByDate();
                 setIsReloadButtonLoading(true);
+                setActiveTab('1');
               }}
               disabled={isInitialLoading}
               loading={isReloadButtonLoading}
@@ -704,52 +1227,116 @@ const BookKeeping = () => {
               {isReloadButtonLoading && 'Refreshing'}
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
-          </div>
-          <div className={styles.switchWrapper}>
-            <Switch
-              checked={isDeliveredFiltered}
-              onChange={toggleDeliveredFilter}
-              size="lare"
-              checkedChildren="Show All Orders"
-              unCheckedChildren="Show Delivered Orders"
+            <Input.Search
+              placeholder="Search"
+              size="large"
+              allowClear
+              value={searchedTerm}
+              onChange={(e) => setSearchedTerm(e.target.value)}
             />
           </div>
           {isImportButtonLoading && <Spin style={spinStyle} size="large" />}
-          {!isImportButtonLoading && (
-            <>
-              <Table
-                style={tableStyle}
-                dataSource={orders ? processedOrders : dataSource}
-                columns={columns}
-                rowClassName={styles.topAlignedRow}
-              />
-              <div className={styles.totalGovWrapper}>
-                <Descriptions
-                  bordered
-                  column={3}
-                  style={descriptionStyle}
-                  layout="vertical"
-                  title="Total Info"
-                >
-                  <Descriptions.Item label="Total Gov">
-                    ₹
-                    {orders
-                      .reduce((acc, order) => acc + order.total, 0)
-                      .toLocaleString()}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Total Cr">
-                    ₹
-                    {orders
-                      .reduce(
-                        (acc, order) => acc + (order.cr ? order.cr : 0),
-                        0,
-                      )
-                      .toLocaleString()}
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-            </>
-          )}
+          <>
+            <Tabs
+              style={{ padding: '0 16px' }}
+              defaultActiveKey="1"
+              activeKey={activeTab}
+              onChange={handleTabChange}
+              indicator={{ align: 'center' }}
+            >
+              <Tabs.TabPane
+                icon={<MobileOutlined />}
+                tab="Online orders"
+                key="1"
+              >
+                {!isImportButtonLoading && (
+                  <>
+                    <div className={styles.switchWrapper}>
+                      <Switch
+                        checked={isDeliveredFiltered}
+                        onChange={toggleDeliveredFilter}
+                        size="lare"
+                        checkedChildren="Show All Orders"
+                        unCheckedChildren="Show Delivered Orders"
+                      />
+                    </div>
+                    <Table
+                      style={tableStyle}
+                      dataSource={orders ? processedOrders : dataSource}
+                      columns={columns}
+                      rowClassName={styles.topAlignedRow}
+                    />
+                    <div className={styles.totalGovWrapper}>
+                      <Descriptions
+                        bordered
+                        column={3}
+                        style={descriptionStyle}
+                        layout="vertical"
+                        title="Total Info"
+                      >
+                        <Descriptions.Item label="Total Gov">
+                          ₹
+                          {orders
+                            .reduce((acc, order) => acc + order.total, 0)
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Total Cr">
+                          ₹
+                          {orders
+                            .reduce(
+                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                              0,
+                            )
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </>
+                )}
+              </Tabs.TabPane>
+              <Tabs.TabPane
+                icon={<ShopOutlined />}
+                tab="Offline orders"
+                key="2"
+              >
+                {!isImportButtonLoading && (
+                  <>
+                    <Table
+                      style={tableStyle}
+                      dataSource={orders ? processedOrders : dataSource}
+                      columns={columns}
+                      rowClassName={styles.topAlignedRow}
+                    />
+                    <div className={styles.totalGovWrapper}>
+                      <Descriptions
+                        bordered
+                        column={3}
+                        style={descriptionStyle}
+                        layout="vertical"
+                        title="Total Info"
+                      >
+                        <Descriptions.Item label="Total Gov">
+                          ₹
+                          {orders
+                            .reduce((acc, order) => acc + order.total, 0)
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Total Cr">
+                          ₹
+                          {orders
+                            .reduce(
+                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                              0,
+                            )
+                            .toLocaleString()}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </>
+                )}
+              </Tabs.TabPane>
+            </Tabs>
+          </>
         </div>
       </div>
     </>

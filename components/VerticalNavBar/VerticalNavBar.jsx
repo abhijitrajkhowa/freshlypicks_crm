@@ -11,53 +11,67 @@ import {
   ReconciliationOutlined,
   LogoutOutlined,
   SmileOutlined,
+  MoneyCollectOutlined,
+  DoubleRightOutlined,
+  DoubleLeftOutlined,
 } from '@ant-design/icons';
 import { Menu, Modal } from 'antd';
 import { useDispatch } from 'react-redux';
 import { CLEAR_USER_DATA } from '../../redux/types';
 import { useNavigate } from 'react-router-dom';
 
-function getItem(label, key, icon, children, type) {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  };
-}
-
-const items = [
-  getItem('Dashboard', '/dashboard', <DashboardOutlined />),
-  getItem('Book Keeping', '/bookKeeping', <BookOutlined />),
-  getItem(
-    'Pending Payments',
-    '/pendingPayments',
-    <ExclamationCircleOutlined />,
-  ),
-  getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
-  getItem('Customers', '/customers', <SmileOutlined />),
-  getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
-  {
-    type: 'divider',
-  },
-  getItem(
-    'Others',
-    'grp',
-    null,
-    [
-      getItem('Setting', '/setting', <SettingOutlined />),
-      getItem('Freshly picks', '/freshlyPicks', <MailOutlined />),
-      getItem('Log out', 'Log out', <LogoutOutlined />),
-    ],
-    'group',
-  ),
-];
-
 const VerticalNavBar = () => {
   const [toggleModal, setToggleModal] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleCollapse = () => {
+    setIsCollapsed((isCollapsed) => !isCollapsed);
+  };
+
+  function getItem(label, key, icon, children, type) {
+    return {
+      key,
+      icon,
+      children,
+      label,
+      type,
+    };
+  }
+
+  const items = [
+    getItem('Dashboard', '/dashboard', <DashboardOutlined />),
+    getItem('Book Keeping', '/bookKeeping', <BookOutlined />),
+    getItem(
+      'Pending Payments',
+      '/pendingPayments',
+      <ExclamationCircleOutlined />,
+    ),
+    getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
+    getItem('Customers', '/customers', <SmileOutlined />),
+    getItem('Expenses', '/expenses', <MoneyCollectOutlined />),
+    getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
+    {
+      type: 'divider',
+    },
+    getItem(
+      'Others',
+      'grp',
+      null,
+      [
+        getItem('Setting', '/setting', <SettingOutlined />),
+        getItem('Freshly picks', '/freshlyPicks', <MailOutlined />),
+        getItem('Log out', 'Log out', <LogoutOutlined />),
+      ],
+      'group',
+    ),
+    {
+      key: 'collapse',
+      icon: isCollapsed ? <DoubleRightOutlined /> : <DoubleLeftOutlined />,
+      label: isCollapsed ? 'Expand' : 'Collapse',
+    },
+  ];
 
   const handleToggleModal = () => {
     setToggleModal((toggleModal) => !toggleModal);
@@ -72,6 +86,8 @@ const VerticalNavBar = () => {
   const onClick = ({ key }) => {
     if (key === 'Log out') {
       handleToggleModal();
+    } else if (key === 'collapse') {
+      handleCollapse();
     } else {
       navigate(`/home${key}`);
     }
@@ -84,7 +100,7 @@ const VerticalNavBar = () => {
   const menuStyle = {
     display: 'flex',
     flexDirection: 'column',
-    width: 256,
+    // width: 220,
     height: '100%',
     fontSize: '16px',
     paddingTop: 24,
@@ -104,6 +120,7 @@ const VerticalNavBar = () => {
       </Modal>
       <div className={styles.verticalNavBar}>
         <Menu
+          inlineCollapsed={isCollapsed}
           onClick={onClick}
           style={menuStyle}
           defaultSelectedKeys={['/dashboard']}
