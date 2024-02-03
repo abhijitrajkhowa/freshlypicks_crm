@@ -29,6 +29,7 @@ import {
   Icon,
   Spin,
   Empty,
+  Form,
 } from 'antd';
 
 const GenerateBill = () => {
@@ -50,6 +51,7 @@ const GenerateBill = () => {
   const [currentDeleteItem, setCurrentDeleteItem] = useState(null);
   const [isDeletingItemFromBill, setIsDeletingItemFromBill] = useState(false);
   const [updatedItems, setUpdatedItems] = useState({});
+  const [miscValue, setMiscValue] = useState('');
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -150,7 +152,7 @@ const GenerateBill = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          name: vendor.name,
+          name: vendorName === 'Misc' ? `Misc ${miscValue}` : vendor.name,
           vendorId: vendor._id,
           date: new Date(date),
           amount: 0,
@@ -164,6 +166,7 @@ const GenerateBill = () => {
           toast.error(data.error, {
             position: 'bottom-center',
           });
+          setMiscValue('');
           setIsGeneratingBill(false);
           setIsItemModalVisible(false);
           return;
@@ -171,6 +174,7 @@ const GenerateBill = () => {
         toast.success(data.message, {
           position: 'bottom-center',
         });
+        setMiscValue('');
         getVendorBills();
         setIsGeneratingBill(false);
         setIsItemModalVisible(false);
@@ -179,6 +183,7 @@ const GenerateBill = () => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setMiscValue('');
         setIsGeneratingBill(false);
         setIsItemModalVisible(false);
       });
@@ -390,19 +395,37 @@ const GenerateBill = () => {
         onOk={() => {
           generateBill();
         }}
-        okButtonProps={{ loading: isGeneratingBill }}
+        okButtonProps={{ loading: isGeneratingBill, disabled: !vendorName }}
         okText="Add"
-        onCancel={() => setIsItemModalVisible(false)}
+        onCancel={() => {
+          setIsItemModalVisible(false);
+          setMiscValue('');
+        }}
       >
         <Select
-          defaultValue="Select vendor"
+          value={vendorName || 'Select vendor'}
           size="large"
           style={selectStyle}
           allowClear
           loading={vendorList.length === 0}
-          onChange={(value) => setVendorName(value)}
+          onChange={(value) => {
+            setVendorName(value);
+            setMiscValue('');
+          }}
           options={processVendorList()}
         />
+        {vendorName === 'Misc' && (
+          <Form>
+            <Form.Item label="Misc additional name">
+              <Input
+                allowClear
+                value={miscValue}
+                onChange={(e) => setMiscValue(e.target.value)}
+                placeholder="Enter additional name for Misc"
+              />
+            </Form.Item>
+          </Form>
+        )}
       </Modal>
       <div className={styles.generateBill}>
         <div className={styles.mainContents}>

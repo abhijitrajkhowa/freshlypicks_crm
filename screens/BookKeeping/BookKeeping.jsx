@@ -651,7 +651,7 @@ const BookKeeping = () => {
           'Content-Type': 'application/json',
         },
         body: {
-          vendorId: vendor._id,
+          billId: vendor._id,
           date: new Date(date),
           order: orderCopy,
         },
@@ -685,12 +685,12 @@ const BookKeeping = () => {
     window.electron
       .invoke('api-request', {
         method: 'POST',
-        url: `${baseUrl}/get-vendors-list`,
+        url: `${baseUrl}/crm/get-vendor-name-list-by-date`,
         headers: {
           'Content-Type': 'application/json',
         },
         body: {
-          managerId: user.id,
+          date: new Date(date),
         },
       })
       .then((response) => {
@@ -880,6 +880,7 @@ const BookKeeping = () => {
 
   useEffect(() => {
     processOrders();
+    getVendorsList();
   }, [orders, isDeliveredFiltered]);
 
   useEffect(() => {
@@ -975,7 +976,7 @@ const BookKeeping = () => {
           size="large"
           style={selectStyle}
           allowClear
-          loading={vendorList.length === 0}
+          loading={vendorList ? vendorList.length === 0 : true}
           onChange={(value) => setVendorName(value)}
           options={processVendorList()}
         />
