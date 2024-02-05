@@ -326,9 +326,9 @@ const GenerateBill = () => {
     });
 
     if (inputsAreEmpty) {
-      return vendorBill.amount;
+      return vendorBill.amount.toLocaleString();
     } else {
-      return totalAmount.toFixed(2);
+      return Number(totalAmount.toFixed(2)).toLocaleString();
     }
   };
 
@@ -407,6 +407,7 @@ const GenerateBill = () => {
           size="large"
           style={selectStyle}
           allowClear
+          showSearch
           loading={vendorList.length === 0}
           onChange={(value) => {
             setVendorName(value);
@@ -435,6 +436,15 @@ const GenerateBill = () => {
               onChange={onDateChange}
               size="large"
             />
+            <Descriptions size="small" bordered>
+              <Descriptions.Item label="Total amount">
+                {Number(
+                  vendorBills
+                    .reduce((acc, bill) => acc + parseFloat(bill.amount), 0)
+                    .toFixed(2),
+                ).toLocaleString()}
+              </Descriptions.Item>
+            </Descriptions>
             <Button
               onClick={() => {
                 setIsItemModalVisible(true);
