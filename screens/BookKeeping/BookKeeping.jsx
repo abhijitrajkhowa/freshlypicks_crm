@@ -39,6 +39,7 @@ import {
   Popconfirm,
   Form,
   Tabs,
+  Checkbox,
 } from 'antd';
 
 const BookKeeping = () => {
@@ -71,6 +72,9 @@ const BookKeeping = () => {
   const [localChickenNetQuantity, setLocalChickenNetQuantity] = useState(0);
   const [searchedTerm, setSearchedTerm] = useState('');
   const lastFetchRef = useRef({ date: null, activeTab: null });
+  // Add a state variable for the selection mode and the selected items
+  const [isMultipleSelectionMode, setIsMultipleSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const formRef = useRef();
 
@@ -170,7 +174,6 @@ const BookKeeping = () => {
           style={listItemStyle}
           dataSource={items}
           renderItem={(item, index) => {
-            // Check if there's any order in any vendorBill that has the same orderId and name as the item
             const isItemInVendorBills = vendorBills.some((vendorBill) =>
               vendorBill.orders.some(
                 (order) =>
@@ -190,11 +193,36 @@ const BookKeeping = () => {
                     ? differentListItemChildStyle
                     : listItemChildStyle
                 }
-                onClick={() => {
-                  if (!isItemInVendorBills) handleItemClick(item);
-                }}
               >
-                {index + 1}. {item.name} -- {item.quantity} {item.unit}
+                {isMultipleSelectionMode ? (
+                  <div className={styles.checkboxItems}>
+                    <label className={styles.checkboxItems}>
+                      <Checkbox
+                        disabled={isItemInVendorBills}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedItems([...selectedItems, item]);
+                          } else {
+                            setSelectedItems(
+                              selectedItems.filter((i) => i !== item),
+                            );
+                          }
+                        }}
+                      />
+                      <div className={styles.checkboxItemName}>
+                        {index + 1}. {item.name} -- {item.quantity} {item.unit}
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => {
+                      if (!isItemInVendorBills) handleItemClick(item);
+                    }}
+                  >
+                    {index + 1}. {item.name} -- {item.quantity} {item.unit}
+                  </div>
+                )}
               </List.Item>
             );
           }}
@@ -420,6 +448,7 @@ const BookKeeping = () => {
   };
 
   const onDateChange = (date, dateString) => {
+    setSelectedItems([]);
     setDate(dateString);
   };
 
@@ -632,16 +661,21 @@ const BookKeeping = () => {
       });
   };
 
-  const addToVendorBill = (order) => {
+  const addToVendorBill = () => {
     setIsAddingToVendorBill(true);
     const vendor = vendorList.find((vendor) => vendor.name === vendorName);
 
-    // Create a copy of the order object
-    const orderCopy = { ...order };
+    const items = isMultipleSelectionMode ? selectedItems : [selectedBillItem];
 
-    if (orderCopy.name?.includes('Local Chicken')) {
-      orderCopy.quantity = localChickenNetQuantity;
-    }
+    const ordersCopy = items.map((order) => {
+      const orderCopy = { ...order };
+
+      if (orderCopy.name?.includes('Local Chicken')) {
+        orderCopy.quantity = localChickenNetQuantity;
+      }
+
+      return orderCopy;
+    });
 
     window.electron
       .invoke('api-request', {
@@ -653,7 +687,7 @@ const BookKeeping = () => {
         body: {
           billId: vendor._id,
           date: new Date(date),
-          order: orderCopy,
+          orders: ordersCopy,
         },
       })
       .then((response) => {
@@ -668,6 +702,7 @@ const BookKeeping = () => {
         }
         setIsAddingToVendorBill(false);
         setSelectedBillItem({});
+        setSelectedItems([]);
         getVendorBills();
         setLocalChickenNetQuantity(0);
         setVendorName('');
@@ -899,6 +934,10 @@ const BookKeeping = () => {
     processOrders();
   }, [searchedTerm]);
 
+  useEffect(() => {
+    console.log('selectedItems:', selectedItems);
+  }, [isMultipleSelectionMode, selectedItems]);
+
   return (
     <>
       <Modal
@@ -956,7 +995,7 @@ const BookKeeping = () => {
         open={isItemModalVisible}
         onOk={() => {
           setIsItemModalVisible(false);
-          addToVendorBill(selectedBillItem);
+          addToVendorBill();
         }}
         okButtonProps={{ disabled: !vendorName, loading: isAddingToVendorBill }}
         okText="Add"
@@ -970,6 +1009,7 @@ const BookKeeping = () => {
           size="large"
           style={selectStyle}
           allowClear
+          showSearch
           loading={vendorList ? vendorList.length === 0 : true}
           onChange={(value) => setVendorName(value)}
           options={processVendorList()}
@@ -1202,6 +1242,7 @@ const BookKeeping = () => {
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
+              style={{ width: 200 }}
               value={dayjs(date ? date : dayjs().format('YYYY-MM-DD'))}
               onChange={onDateChange}
               size="large"
@@ -1253,6 +1294,27 @@ const BookKeeping = () => {
                         checkedChildren="Show All Orders"
                         unCheckedChildren="Show Delivered Orders"
                       />
+                      <div
+                        className={styles.multipleSelectionToggleButtonWrapper}
+                      >
+                        <p>Multiple selection mode:</p>
+                        <Switch
+                          checked={isMultipleSelectionMode}
+                          onChange={(checked) =>
+                            setIsMultipleSelectionMode(checked)
+                          }
+                        />
+                        {isMultipleSelectionMode && (
+                          <Button
+                            onClick={() => {
+                              setIsItemModalVisible(true);
+                            }}
+                            type="primary"
+                          >
+                            forward to vendor
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <Table
                       style={tableStyle}

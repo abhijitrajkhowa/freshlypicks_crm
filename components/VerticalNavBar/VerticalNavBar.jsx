@@ -52,7 +52,7 @@ const VerticalNavBar = () => {
     getItem('Generate Bill', '/generateBill', <ReconciliationOutlined />),
     getItem('Customers', '/customers', <SmileOutlined />),
     getItem('Expenses', '/expenses', <MoneyCollectOutlined />),
-    getItem('Inventory', '/inventory', <DropboxOutlined />),
+    // getItem('Inventory', '/inventory', <DropboxOutlined />),
     getItem('Miscellaneous', '/miscellaneous', <AppstoreOutlined />),
     {
       type: 'divider',

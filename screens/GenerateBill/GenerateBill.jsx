@@ -326,9 +326,9 @@ const GenerateBill = () => {
     });
 
     if (inputsAreEmpty) {
-      return vendorBill.amount.toLocaleString();
+      return vendorBill.amount;
     } else {
-      return Number(totalAmount.toFixed(2)).toLocaleString();
+      return totalAmount.toFixed(2);
     }
   };
 
