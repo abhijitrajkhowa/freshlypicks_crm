@@ -40,6 +40,7 @@ import {
   Form,
   Tabs,
   Checkbox,
+  Skeleton,
 } from 'antd';
 import { SET_DATE } from '../../redux/types';
 
@@ -80,6 +81,7 @@ const BookKeeping = () => {
   // Add a state variable for the selection mode and the selected items
   const [isMultipleSelectionMode, setIsMultipleSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [isGettingVendorBills, setIsGettingVendorBills] = useState(false);
 
   const formRef = useRef();
 
@@ -172,6 +174,7 @@ const BookKeeping = () => {
       title: 'Items',
       dataIndex: 'items',
       key: 'items',
+      width: '20%',
       render: (items, record) => (
         <List
           size="small"
@@ -179,6 +182,14 @@ const BookKeeping = () => {
           style={listItemStyle}
           dataSource={items}
           renderItem={(item, index) => {
+            if (isGettingVendorBills) {
+              return (
+                <div className={styles.listSkeleton}>
+                  <Skeleton title active paragraph={false} />
+                </div>
+              );
+            }
+
             const isItemInVendorBills = vendorBills.some((vendorBill) =>
               vendorBill.orders.some(
                 (order) =>
@@ -204,6 +215,7 @@ const BookKeeping = () => {
                     <label className={styles.checkboxItems}>
                       <Checkbox
                         disabled={isItemInVendorBills}
+                        checked={selectedItems.includes(item)}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSelectedItems([...selectedItems, item]);
@@ -648,6 +660,7 @@ const BookKeeping = () => {
   };
 
   const getVendorBills = () => {
+    setIsGettingVendorBills(true);
     window.electron
       .invoke('api-request', {
         method: 'POST',
@@ -662,14 +675,20 @@ const BookKeeping = () => {
       .then((response) => {
         const data = JSON.parse(response.body);
         if (response.status !== 200) {
+          toast.error(date.error, {
+            position: 'bottom-center',
+          });
+          setIsGettingVendorBills(false);
           return;
         }
         setVendorBills(data.vendorBills);
+        setIsGettingVendorBills(false);
       })
       .catch((err) => {
         toast.error(err.message, {
           position: 'bottom-center',
         });
+        setIsGettingVendorBills(false);
       });
   };
 
@@ -945,10 +964,6 @@ const BookKeeping = () => {
   useEffect(() => {
     processOrders();
   }, [searchedTerm]);
-
-  useEffect(() => {
-    console.log('selectedItems:', selectedItems);
-  }, [isMultipleSelectionMode, selectedItems]);
 
   return (
     <>

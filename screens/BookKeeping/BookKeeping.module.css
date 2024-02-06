@@ -59,3 +59,7 @@
   gap: 16px;
   cursor: pointer;
 }
+
+.listSkeleton {
+  width: 100%;
+}
