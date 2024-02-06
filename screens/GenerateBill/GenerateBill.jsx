@@ -583,7 +583,7 @@ const GenerateBill = () => {
                                         <Input
                                           type="number"
                                           placeholder="Enter vendor price"
-                                          defaultValue={
+                                          value={
                                             order.customVendorPrice
                                               ? order.customVendorPrice
                                               : amounts[item._id]?.[
@@ -595,21 +595,19 @@ const GenerateBill = () => {
                                               e.target.value,
                                             );
 
+                                            // Update the order object with the new vendor price
+                                            order.customVendorPrice =
+                                              newVendorPrice;
+
                                             // Get the current state of the updatedItem object
                                             const updatedItem = updatedItems[
                                               item._id
                                             ] || { ...item };
 
-                                            // Update the order object with the new vendor price
-                                            const updatedOrder = {
-                                              ...order,
-                                              customVendorPrice: newVendorPrice,
-                                            };
-
                                             // Update the updatedItem object with the new order in its orders array
                                             updatedItem.orders =
                                               updatedItem.orders.map((o, i) =>
-                                                i === index ? updatedOrder : o,
+                                                i === index ? order : o,
                                               );
 
                                             // Update the amounts state
