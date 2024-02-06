@@ -5,6 +5,7 @@ const initialState = {
   bookKeeping: moment().format('YYYY-MM-DD'),
   generateBill: moment().format('YYYY-MM-DD'),
   expenses: moment().format('YYYY-MM-DD'),
+  inventory: moment().format('YYYY-MM-DD'),
 };
 
 const date = (state = initialState, action) => {

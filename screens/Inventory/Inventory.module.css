@@ -5,3 +5,36 @@
   justify-content: flex-start;
   gap: 16px;
 }
+
+.OnlineInventoryItemsWrapper {
+  padding: 16px;
+  padding-top: 8px;
+}
+
+.editIcon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.editIcon:hover {
+  color: #1890ff; /* Change to the color you want when hovering */
+}
+
+.editIcon:active {
+  transform: scale(0.9); /* Makes the icon slightly smaller when clicking */
+}
+
+.initialStockWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.quantityChangeWrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
