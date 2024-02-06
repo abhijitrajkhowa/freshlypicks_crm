@@ -10,6 +10,7 @@ import Miscellaneous from '../Miscellaneous/Miscellaneous';
 import Setting from '../Setting/Setting';
 import Customers from '../Customers/Customers';
 import Expenses from '../Expenses/Expenses';
+import Inventory from '../Inventory/Inventory';
 
 import VerticalNavBar from '../../components/VerticalNavBar/VerticalNavBar';
 
@@ -30,6 +31,7 @@ const Home = () => {
             <Route path="setting" element={<Setting />} />
             <Route path="customers" element={<Customers />} />
             <Route path="expenses" element={<Expenses />} />
+            <Route path="inventory" element={<Inventory />} />
           </Routes>
         </div>
       </div>

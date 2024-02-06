@@ -13,7 +13,18 @@
 }
 
 .switchWrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
   padding: 8px 0 0 0;
+  align-items: center;
+}
+
+.multipleSelectionToggleButtonWrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
 }
 
 .totalGovWrapper {
@@ -39,4 +50,16 @@
   flex-direction: row;
   align-items: center;
   gap: 16px;
+}
+
+.checkboxItems {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.listSkeleton {
+  width: 100%;
 }

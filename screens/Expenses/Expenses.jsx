@@ -19,7 +19,7 @@ import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
 
 import {
@@ -47,9 +47,14 @@ import {
   Card,
   Empty,
 } from 'antd';
+import { SET_DATE } from '../../redux/types';
 
 const Expenses = () => {
-  const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
+  const dispatch = useDispatch();
+  const expensesDate = useSelector((state) => state.date.expenses);
+  const [date, setDate] = useState(
+    expensesDate || moment().format('YYYY-MM-DD'),
+  );
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
   const [isGenerateExpenseModalVisible, setIsGenerateExpenseModalVisible] =
@@ -101,6 +106,13 @@ const Expenses = () => {
 
   const onDateChange = (date, dateString) => {
     setDate(dateString);
+    dispatch({
+      type: SET_DATE,
+      payload: {
+        screen: 'expenses',
+        date: dateString,
+      },
+    });
   };
 
   const addExpenseButtonStyle = { width: '100%' };
