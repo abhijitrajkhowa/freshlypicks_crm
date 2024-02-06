@@ -17,7 +17,7 @@ import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
 
 import {
@@ -41,11 +41,16 @@ import {
   Tabs,
   Checkbox,
 } from 'antd';
+import { SET_DATE } from '../../redux/types';
 
 const BookKeeping = () => {
+  const dispatch = useDispatch();
+  const bookKeepingDate = useSelector((state) => state.date.bookKeeping);
   const user = useSelector((state) => state.user);
   const products = useSelector((state) => state.products);
-  const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
+  const [date, setDate] = useState(
+    bookKeepingDate || moment().format('YYYY-MM-DD'),
+  );
   const [isImportButtonLoading, setIsImportButtonLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [isDeliveredFiltered, setIsDeliveredFiltered] = useState(true);
@@ -450,6 +455,13 @@ const BookKeeping = () => {
   const onDateChange = (date, dateString) => {
     setSelectedItems([]);
     setDate(dateString);
+    dispatch({
+      type: SET_DATE,
+      payload: {
+        screen: 'bookKeeping',
+        date: dateString,
+      },
+    });
   };
 
   const getOrdersByDate = () => {

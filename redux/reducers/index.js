@@ -4,6 +4,7 @@ import themeReducer from './themeReducer';
 import colorScheme from './colorscheme';
 import products from './products';
 import orders from './orders';
+import date from './date';
 
 const rootReducer = combineReducers({
   user,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   colorScheme,
   products,
   orders,
+  date,
 });
 
 export default rootReducer;

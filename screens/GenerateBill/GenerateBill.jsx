@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import moment from 'moment';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../utils/helper';
@@ -31,10 +31,15 @@ import {
   Empty,
   Form,
 } from 'antd';
+import { SET_DATE } from '../../redux/types';
 
 const GenerateBill = () => {
+  const dispatch = useDispatch();
+  const generateBillDate = useSelector((state) => state.date.generateBill);
   const user = useSelector((state) => state.user);
-  const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
+  const [date, setDate] = useState(
+    generateBillDate || moment().format('YYYY-MM-DD'),
+  );
   const [vendorList, setVendorList] = useState([]);
   const [vendorName, setVendorName] = useState('');
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
@@ -81,6 +86,13 @@ const GenerateBill = () => {
 
   const onDateChange = (date, dateString) => {
     setDate(dateString);
+    dispatch({
+      type: SET_DATE,
+      payload: {
+        screen: 'generateBill',
+        date: dateString,
+      },
+    });
   };
 
   const selectStyle = {
@@ -436,7 +448,7 @@ const GenerateBill = () => {
               onChange={onDateChange}
               size="large"
             />
-            <Descriptions size="small" bordered>
+            <Descriptions bordered>
               <Descriptions.Item label="Total amount">
                 {Number(
                   vendorBills
