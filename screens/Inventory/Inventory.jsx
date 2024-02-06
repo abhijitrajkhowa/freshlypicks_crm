@@ -70,6 +70,8 @@ const Inventory = () => {
     currentSelectedOnlineInventoryItem,
     setCurrentSelectedOnlineInventoryItem,
   ] = useState({});
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
+  const [customQuantity, setCustomQuantity] = useState(-1);
 
   const selectStyle = {
     width: '100%',
@@ -153,12 +155,125 @@ const Inventory = () => {
     },
   ];
 
-  const handleIncrease = (item) => {
-    // Increase the quantity of the item
+  const handleIncrease = (record, increaseAmount) => {
+    setCustomQuantity((quantity) => {
+      return quantity + increaseAmount;
+    });
+    // setIsUpdatingQuantity(true);
+    // const currentStock = Array.isArray(
+    //   currentSelectedOnlineInventoryItem.currentStock,
+    // )
+    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
+    //   : [];
+    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
+    // if (updatedItem) {
+    //   updatedItem.quantity += 1;
+    //   setCurrentSelectedOnlineInventoryItem({
+    //     ...currentSelectedOnlineInventoryItem,
+    //     currentStock: currentStock,
+    //   });
+    // }
+    // const newCurrentRecord = record.quantity + 1;
+    // const newCurrentRecordDate = record.date;
+    // window.electron
+    //   .invoke('api-request', {
+    //     method: 'POST',
+    //     url: `${baseUrl}/crm/update-online-inventory-item`,
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: {
+    //       currentSelectedOnlineInventoryItem:
+    //         currentSelectedOnlineInventoryItem,
+    //       quantity: newCurrentRecord,
+    //       date: newCurrentRecordDate,
+    //     },
+    //   })
+    //   .then((response) => {
+    //     const data = JSON.parse(response.body);
+    //     if (response.status !== 200) {
+    //       toast.error(data.error, {
+    //         position: 'bottom-center',
+    //       });
+    //       setIsUpdatingQuantity(false);
+    //       getOnlineInventoryItems();
+    //       return;
+    //     }
+    //     toast.success(data.message, {
+    //       position: 'bottom-center',
+    //     });
+    //     setIsUpdatingQuantity(false);
+    //     getOnlineInventoryItems();
+    //   })
+    //   .catch((err) => {
+    //     toast.error(err.message, {
+    //       position: 'bottom-center',
+    //     });
+    //     setIsUpdatingQuantity(false);
+    //     getOnlineInventoryItems();
+    //   });
   };
 
-  const handleDecrease = (item) => {
-    // Decrease the quantity of the item
+  const handleDecrease = (record, increaseAmount) => {
+    setCustomQuantity((quantity) => {
+      if (quantity - increaseAmount < 0) {
+        return 0;
+      }
+      return quantity - increaseAmount;
+    });
+    // setIsUpdatingQuantity(true);
+    // const currentStock = Array.isArray(
+    //   currentSelectedOnlineInventoryItem.currentStock,
+    // )
+    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
+    //   : [];
+    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
+    // if (updatedItem) {
+    //   updatedItem.quantity -= 1;
+    //   setCurrentSelectedOnlineInventoryItem({
+    //     ...currentSelectedOnlineInventoryItem,
+    //     currentStock: currentStock,
+    //   });
+    // }
+    // const newCurrentRecord = record.quantity - 1;
+    // const newCurrentRecordDate = record.date;
+    // window.electron
+    //   .invoke('api-request', {
+    //     method: 'POST',
+    //     url: `${baseUrl}/crm/update-online-inventory-item`,
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: {
+    //       currentSelectedOnlineInventoryItem:
+    //         currentSelectedOnlineInventoryItem,
+    //       quantity: newCurrentRecord,
+    //       date: newCurrentRecordDate,
+    //     },
+    //   })
+    //   .then((response) => {
+    //     const data = JSON.parse(response.body);
+    //     if (response.status !== 200) {
+    //       toast.error(data.error, {
+    //         position: 'bottom-center',
+    //       });
+    //       setIsUpdatingQuantity(false);
+    //       getOnlineInventoryItems();
+    //       return;
+    //     }
+    //     toast.success(data.message, {
+    //       position: 'bottom-center',
+    //     });
+    //     setIsUpdatingQuantity(false);
+    //     getOnlineInventoryItems();
+    //   })
+    //   .catch((err) => {
+    //     toast.error(err.message, {
+    //       position: 'bottom-center',
+    //     });
+    //     setIsUpdatingQuantity(false);
+    //     getOnlineInventoryItems();
+    //   });
   };
 
   const selectedOnlineInventoryItemColumns = [
@@ -180,14 +295,43 @@ const Inventory = () => {
       width: '50%',
       render: (quantity, record) => {
         const isCurrentDate = moment(record.date).isSame(moment(date), 'day');
+        if (isCurrentDate) {
+          if (customQuantity < 0) {
+            setCustomQuantity(quantity);
+          }
+        }
         return isCurrentDate ? (
           <div className={styles.quantityChangeWrapper}>
-            <Button type="primary" onClick={() => handleDecrease(record)}>
+            <Button type="primary" onClick={() => handleDecrease(record, 1000)}>
               <MinusOutlined />
+              1000
             </Button>
-            {quantity}
-            <Button type="primary" onClick={() => handleIncrease(record)}>
+            <Button type="primary" onClick={() => handleDecrease(record, 100)}>
+              <MinusOutlined />
+              100
+            </Button>
+            <Button type="primary" onClick={() => handleDecrease(record, 10)}>
+              <MinusOutlined />
+              10
+            </Button>
+            <Button type="primary" onClick={() => handleDecrease(record, 1)}>
+              <MinusOutlined />1
+            </Button>
+            {isUpdatingQuantity ? <Spin /> : customQuantity}
+            <Button type="primary" onClick={() => handleIncrease(record, 1)}>
+              <PlusOutlined />1
+            </Button>
+            <Button type="primary" onClick={() => handleIncrease(record, 10)}>
               <PlusOutlined />
+              10
+            </Button>
+            <Button type="primary" onClick={() => handleIncrease(record, 100)}>
+              <PlusOutlined />
+              100
+            </Button>
+            <Button type="primary" onClick={() => handleIncrease(record, 1000)}>
+              <PlusOutlined />
+              1000
             </Button>
           </div>
         ) : (
@@ -428,6 +572,10 @@ const Inventory = () => {
     processOnlineInventoryItems();
   }, [category]);
 
+  useEffect(() => {
+    console.log(customQuantity);
+  }, [customQuantity]);
+
   return (
     <>
       {/* This is the modal for adding online item to inventory */}
@@ -501,7 +649,10 @@ const Inventory = () => {
         title="Item details"
         width={'80%'}
         open={isItemsDetailsModalVisible}
-        onCancel={() => setIsItemsDetailsModalVisible(false)}
+        onCancel={() => {
+          setIsItemsDetailsModalVisible(false);
+          setCustomQuantity(-1);
+        }}
         onOk={() => setIsItemsDetailsModalVisible(false)}
         centered
       >
