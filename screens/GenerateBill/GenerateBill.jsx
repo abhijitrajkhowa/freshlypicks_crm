@@ -577,7 +577,14 @@ const GenerateBill = () => {
                                       <span
                                         className={styles.listItemInputTitle}
                                       >
-                                        Vendor Price :
+                                        Vendor Price{' '}
+                                        <span
+                                          className={
+                                            styles.vendorPriceFromAppWrapper
+                                          }
+                                        >
+                                          ₹{order.vendorPrice}/{order.sdunit} :
+                                        </span>
                                       </span>
                                       <div className={styles.innerInputWrapper}>
                                         <Input
