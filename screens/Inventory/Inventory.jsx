@@ -40,6 +40,7 @@ import {
   Popconfirm,
   Form,
   Tabs,
+  Divider,
 } from 'antd';
 import { SET_DATE } from '../../redux/types';
 
@@ -72,6 +73,7 @@ const Inventory = () => {
   ] = useState({});
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [customQuantity, setCustomQuantity] = useState(-1);
+  const [editedQuantity, setEditedQuantity] = useState(null);
 
   const selectStyle = {
     width: '100%',
@@ -156,9 +158,14 @@ const Inventory = () => {
   ];
 
   const handleIncrease = (record, increaseAmount) => {
-    setCustomQuantity((quantity) => {
+    // setCustomQuantity((quantity) => {
+    //   return quantity + increaseAmount;
+    // });
+
+    setEditedQuantity((quantity) => {
       return quantity + increaseAmount;
     });
+
     // setIsUpdatingQuantity(true);
     // const currentStock = Array.isArray(
     //   currentSelectedOnlineInventoryItem.currentStock,
@@ -215,12 +222,20 @@ const Inventory = () => {
   };
 
   const handleDecrease = (record, increaseAmount) => {
-    setCustomQuantity((quantity) => {
+    // setCustomQuantity((quantity) => {
+    //   if (quantity - increaseAmount < 0) {
+    //     return 0;
+    //   }
+    //   return quantity - increaseAmount;
+    // });
+
+    setEditedQuantity((quantity) => {
       if (quantity - increaseAmount < 0) {
         return 0;
       }
       return quantity - increaseAmount;
     });
+
     // setIsUpdatingQuantity(true);
     // const currentStock = Array.isArray(
     //   currentSelectedOnlineInventoryItem.currentStock,
@@ -276,6 +291,66 @@ const Inventory = () => {
     //   });
   };
 
+  const updateOnlineInventoryItem = (record) => {
+    setIsUpdatingQuantity(true);
+    // const currentStock = Array.isArray(
+    //   currentSelectedOnlineInventoryItem.currentStock,
+    // )
+    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
+    //   : [];
+    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
+    // if (updatedItem) {
+    //   updatedItem.quantity = customQuantity;
+    //   setCurrentSelectedOnlineInventoryItem({
+    //     ...currentSelectedOnlineInventoryItem,
+    //     currentStock: currentStock,
+    //   });
+    // }
+    // const newCurrentRecordQuantity = customQuantity;
+    const newCurrentRecordQuantity = editedQuantity;
+    const newCurrentRecordDate = record.date;
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/update-online-inventory-item`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          currentSelectedOnlineInventoryItem:
+            currentSelectedOnlineInventoryItem,
+          quantity: newCurrentRecordQuantity,
+          date: newCurrentRecordDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setEditedQuantity(customQuantity);
+          setIsUpdatingQuantity(false);
+          getOnlineInventoryItems();
+          return;
+        }
+        setCustomQuantity(editedQuantity);
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setIsUpdatingQuantity(false);
+        getOnlineInventoryItems();
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setEditedQuantity(customQuantity);
+        setIsUpdatingQuantity(false);
+        getOnlineInventoryItems();
+      });
+  };
+
   const selectedOnlineInventoryItemColumns = [
     {
       title: 'Date',
@@ -317,7 +392,13 @@ const Inventory = () => {
             <Button type="primary" onClick={() => handleDecrease(record, 1)}>
               <MinusOutlined />1
             </Button>
-            {isUpdatingQuantity ? <Spin /> : customQuantity}
+            {isUpdatingQuantity ? (
+              <Spin />
+            ) : editedQuantity !== null ? (
+              editedQuantity
+            ) : (
+              customQuantity
+            )}
             <Button type="primary" onClick={() => handleIncrease(record, 1)}>
               <PlusOutlined />1
             </Button>
@@ -333,6 +414,15 @@ const Inventory = () => {
               <PlusOutlined />
               1000
             </Button>
+            <Divider type="vertical" />
+            <Popconfirm
+              title="Are you sure you want to update this record?"
+              onConfirm={() => updateOnlineInventoryItem(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button type="primary">Update</Button>
+            </Popconfirm>
           </div>
         ) : (
           quantity
@@ -573,8 +663,10 @@ const Inventory = () => {
   }, [category]);
 
   useEffect(() => {
-    console.log(customQuantity);
-  }, [customQuantity]);
+    if (isItemsDetailsModalVisible) {
+      setEditedQuantity(customQuantity);
+    }
+  }, [isItemsDetailsModalVisible, customQuantity]);
 
   return (
     <>
@@ -652,8 +744,13 @@ const Inventory = () => {
         onCancel={() => {
           setIsItemsDetailsModalVisible(false);
           setCustomQuantity(-1);
+          setEditedQuantity(null);
         }}
-        onOk={() => setIsItemsDetailsModalVisible(false)}
+        onOk={() => {
+          setIsItemsDetailsModalVisible(false);
+          setCustomQuantity(-1);
+          setEditedQuantity(null);
+        }}
         centered
       >
         <Table
