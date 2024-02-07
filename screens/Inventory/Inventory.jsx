@@ -158,155 +158,22 @@ const Inventory = () => {
   ];
 
   const handleIncrease = (record, increaseAmount) => {
-    // setCustomQuantity((quantity) => {
-    //   return quantity + increaseAmount;
-    // });
-
     setEditedQuantity((quantity) => {
       return quantity + increaseAmount;
     });
-
-    // setIsUpdatingQuantity(true);
-    // const currentStock = Array.isArray(
-    //   currentSelectedOnlineInventoryItem.currentStock,
-    // )
-    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
-    //   : [];
-    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
-    // if (updatedItem) {
-    //   updatedItem.quantity += 1;
-    //   setCurrentSelectedOnlineInventoryItem({
-    //     ...currentSelectedOnlineInventoryItem,
-    //     currentStock: currentStock,
-    //   });
-    // }
-    // const newCurrentRecord = record.quantity + 1;
-    // const newCurrentRecordDate = record.date;
-    // window.electron
-    //   .invoke('api-request', {
-    //     method: 'POST',
-    //     url: `${baseUrl}/crm/update-online-inventory-item`,
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: {
-    //       currentSelectedOnlineInventoryItem:
-    //         currentSelectedOnlineInventoryItem,
-    //       quantity: newCurrentRecord,
-    //       date: newCurrentRecordDate,
-    //     },
-    //   })
-    //   .then((response) => {
-    //     const data = JSON.parse(response.body);
-    //     if (response.status !== 200) {
-    //       toast.error(data.error, {
-    //         position: 'bottom-center',
-    //       });
-    //       setIsUpdatingQuantity(false);
-    //       getOnlineInventoryItems();
-    //       return;
-    //     }
-    //     toast.success(data.message, {
-    //       position: 'bottom-center',
-    //     });
-    //     setIsUpdatingQuantity(false);
-    //     getOnlineInventoryItems();
-    //   })
-    //   .catch((err) => {
-    //     toast.error(err.message, {
-    //       position: 'bottom-center',
-    //     });
-    //     setIsUpdatingQuantity(false);
-    //     getOnlineInventoryItems();
-    //   });
   };
 
   const handleDecrease = (record, increaseAmount) => {
-    // setCustomQuantity((quantity) => {
-    //   if (quantity - increaseAmount < 0) {
-    //     return 0;
-    //   }
-    //   return quantity - increaseAmount;
-    // });
-
     setEditedQuantity((quantity) => {
       if (quantity - increaseAmount < 0) {
         return 0;
       }
       return quantity - increaseAmount;
     });
-
-    // setIsUpdatingQuantity(true);
-    // const currentStock = Array.isArray(
-    //   currentSelectedOnlineInventoryItem.currentStock,
-    // )
-    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
-    //   : [];
-    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
-    // if (updatedItem) {
-    //   updatedItem.quantity -= 1;
-    //   setCurrentSelectedOnlineInventoryItem({
-    //     ...currentSelectedOnlineInventoryItem,
-    //     currentStock: currentStock,
-    //   });
-    // }
-    // const newCurrentRecord = record.quantity - 1;
-    // const newCurrentRecordDate = record.date;
-    // window.electron
-    //   .invoke('api-request', {
-    //     method: 'POST',
-    //     url: `${baseUrl}/crm/update-online-inventory-item`,
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: {
-    //       currentSelectedOnlineInventoryItem:
-    //         currentSelectedOnlineInventoryItem,
-    //       quantity: newCurrentRecord,
-    //       date: newCurrentRecordDate,
-    //     },
-    //   })
-    //   .then((response) => {
-    //     const data = JSON.parse(response.body);
-    //     if (response.status !== 200) {
-    //       toast.error(data.error, {
-    //         position: 'bottom-center',
-    //       });
-    //       setIsUpdatingQuantity(false);
-    //       getOnlineInventoryItems();
-    //       return;
-    //     }
-    //     toast.success(data.message, {
-    //       position: 'bottom-center',
-    //     });
-    //     setIsUpdatingQuantity(false);
-    //     getOnlineInventoryItems();
-    //   })
-    //   .catch((err) => {
-    //     toast.error(err.message, {
-    //       position: 'bottom-center',
-    //     });
-    //     setIsUpdatingQuantity(false);
-    //     getOnlineInventoryItems();
-    //   });
   };
 
   const updateOnlineInventoryItem = (record) => {
     setIsUpdatingQuantity(true);
-    // const currentStock = Array.isArray(
-    //   currentSelectedOnlineInventoryItem.currentStock,
-    // )
-    //   ? [...currentSelectedOnlineInventoryItem.currentStock]
-    //   : [];
-    // let updatedItem = currentStock.find((stock) => stock._id === record.key);
-    // if (updatedItem) {
-    //   updatedItem.quantity = customQuantity;
-    //   setCurrentSelectedOnlineInventoryItem({
-    //     ...currentSelectedOnlineInventoryItem,
-    //     currentStock: currentStock,
-    //   });
-    // }
-    // const newCurrentRecordQuantity = customQuantity;
     const newCurrentRecordQuantity = editedQuantity;
     const newCurrentRecordDate = record.date;
     window.electron
@@ -332,6 +199,7 @@ const Inventory = () => {
           setEditedQuantity(customQuantity);
           setIsUpdatingQuantity(false);
           getOnlineInventoryItems();
+          setIsItemsDetailsModalVisible(false);
           return;
         }
         setCustomQuantity(editedQuantity);
@@ -340,6 +208,7 @@ const Inventory = () => {
         });
         setIsUpdatingQuantity(false);
         getOnlineInventoryItems();
+        setIsItemsDetailsModalVisible(false);
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -348,6 +217,7 @@ const Inventory = () => {
         setEditedQuantity(customQuantity);
         setIsUpdatingQuantity(false);
         getOnlineInventoryItems();
+        setIsItemsDetailsModalVisible(false);
       });
   };
 
@@ -399,18 +269,34 @@ const Inventory = () => {
             ) : (
               customQuantity
             )}
-            <Button type="primary" onClick={() => handleIncrease(record, 1)}>
+            <Button
+              disabled={editedQuantity + 1 > record.quantity}
+              type="primary"
+              onClick={() => handleIncrease(record, 1)}
+            >
               <PlusOutlined />1
             </Button>
-            <Button type="primary" onClick={() => handleIncrease(record, 10)}>
+            <Button
+              disabled={editedQuantity + 10 > record.quantity}
+              type="primary"
+              onClick={() => handleIncrease(record, 10)}
+            >
               <PlusOutlined />
               10
             </Button>
-            <Button type="primary" onClick={() => handleIncrease(record, 100)}>
+            <Button
+              disabled={editedQuantity + 100 > record.quantity}
+              type="primary"
+              onClick={() => handleIncrease(record, 100)}
+            >
               <PlusOutlined />
               100
             </Button>
-            <Button type="primary" onClick={() => handleIncrease(record, 1000)}>
+            <Button
+              disabled={editedQuantity + 1000 > record.quantity}
+              type="primary"
+              onClick={() => handleIncrease(record, 1000)}
+            >
               <PlusOutlined />
               1000
             </Button>
