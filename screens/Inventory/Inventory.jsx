@@ -74,6 +74,12 @@ const Inventory = () => {
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [customQuantity, setCustomQuantity] = useState(-1);
   const [editedQuantity, setEditedQuantity] = useState(null);
+  const [initialStockEditedQuantity, setInitialStockEditedQuantity] =
+    useState(null);
+  const [initialStockCustomQuantity, setInitialStockCustomQuantity] =
+    useState(-1);
+  const [isInitialStockModalVisible, setIsInitialStockModalVisible] =
+    useState(false);
 
   const selectStyle = {
     width: '100%',
@@ -113,12 +119,18 @@ const Inventory = () => {
       dataIndex: 'initialStock',
       key: 'initialStock',
       width: 150,
-      render: (initialStock) => {
+      render: (initialStock, record) => {
         return (
           <>
             <div className={styles.initialStockWrapper}>
-              {initialStock[0].quantity}
-              <div className={styles.editIcon}>
+              {initialStock[initialStock.length - 1].quantity}
+              <div
+                onClick={() => {
+                  setCurrentSelectedOnlineInventoryItem(record);
+                  setIsInitialStockModalVisible(true);
+                }}
+                className={styles.editIcon}
+              >
                 <EditOutlined />
               </div>
             </div>
@@ -172,6 +184,18 @@ const Inventory = () => {
     });
   };
 
+  const handleInitialStockIncrease = (record, increaseAmount) => {
+    setInitialStockEditedQuantity((quantity) => {
+      return quantity + increaseAmount;
+    });
+  };
+
+  const handleInitialStockDecrease = (record, increaseAmount) => {
+    setInitialStockEditedQuantity((quantity) => {
+      return quantity - increaseAmount;
+    });
+  };
+
   const updateOnlineInventoryItem = (record) => {
     setIsUpdatingQuantity(true);
     const newCurrentRecordQuantity = editedQuantity;
@@ -218,6 +242,55 @@ const Inventory = () => {
         setIsUpdatingQuantity(false);
         getOnlineInventoryItems();
         setIsItemsDetailsModalVisible(false);
+      });
+  };
+
+  const updateOnlineInventoryItemInitialStock = (record) => {
+    setIsUpdatingQuantity(true);
+    const newCurrentRecordQuantity = initialStockEditedQuantity;
+    const newCurrentRecordDate = record.date;
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/update-online-inventory-item-initial-stock`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          currentSelectedOnlineInventoryItem:
+            currentSelectedOnlineInventoryItem,
+          quantity: newCurrentRecordQuantity,
+          date: newCurrentRecordDate,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          setInitialStockEditedQuantity(initialStockCustomQuantity);
+          setIsUpdatingQuantity(false);
+          getOnlineInventoryItems();
+          setIsInitialStockModalVisible(false);
+          return;
+        }
+        setInitialStockCustomQuantity(initialStockEditedQuantity);
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setIsUpdatingQuantity(false);
+        getOnlineInventoryItems();
+        setIsInitialStockModalVisible(false);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
+        setInitialStockEditedQuantity(initialStockCustomQuantity);
+        setIsUpdatingQuantity(false);
+        getOnlineInventoryItems();
+        setIsInitialStockModalVisible(false);
       });
   };
 
@@ -304,6 +377,115 @@ const Inventory = () => {
             <Popconfirm
               title="Are you sure you want to update this record?"
               onConfirm={() => updateOnlineInventoryItem(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button type="primary">Update</Button>
+            </Popconfirm>
+          </div>
+        ) : (
+          quantity
+        );
+      },
+    },
+  ];
+
+  const selectedOnlineInventoryItemInitialStockColumns = [
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      width: '50%',
+      render: (date) => {
+        return dayjs(date).format('YYYY-MM-DD');
+      },
+      sorter: (a, b) => moment(a.date).unix() - moment(b.date).unix(),
+      sortDirections: ['ascend', 'descend'],
+    },
+    {
+      title: 'Quantity',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: '50%',
+      render: (quantity, record) => {
+        const isCurrentDate = moment(record.date).isSame(moment(date), 'day');
+        if (isCurrentDate && record.isFromDatabase) {
+          // Check the flag
+          if (initialStockCustomQuantity < 0) {
+            setInitialStockCustomQuantity(quantity);
+          }
+        } else if (isCurrentDate && !record.isFromDatabase) {
+          if (initialStockCustomQuantity < 0) {
+            setInitialStockCustomQuantity(0);
+          }
+        }
+        return isCurrentDate ? (
+          <div className={styles.quantityChangeWrapper}>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockDecrease(record, 1000)}
+            >
+              <MinusOutlined />
+              1000
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockDecrease(record, 100)}
+            >
+              <MinusOutlined />
+              100
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockDecrease(record, 10)}
+            >
+              <MinusOutlined />
+              10
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockDecrease(record, 1)}
+            >
+              <MinusOutlined />1
+            </Button>
+            {isUpdatingQuantity ? (
+              <Spin />
+            ) : initialStockEditedQuantity !== null ? (
+              initialStockEditedQuantity
+            ) : (
+              initialStockCustomQuantity
+            )}
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockIncrease(record, 1)}
+            >
+              <PlusOutlined />1
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockIncrease(record, 10)}
+            >
+              <PlusOutlined />
+              10
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockIncrease(record, 100)}
+            >
+              <PlusOutlined />
+              100
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => handleInitialStockIncrease(record, 1000)}
+            >
+              <PlusOutlined />
+              1000
+            </Button>
+            <Divider type="vertical" />
+            <Popconfirm
+              title="Are you sure you want to update this record?"
+              onConfirm={() => updateOnlineInventoryItemInitialStock(record)}
               okText="Yes"
               cancelText="No"
             >
@@ -539,6 +721,57 @@ const Inventory = () => {
     });
   };
 
+  const processCurrentSelectedOnlineInventoryItemInitialStock = () => {
+    const processedCurrentSelectedOnlineInventoryItem = [];
+    const initialStock = Array.isArray(
+      currentSelectedOnlineInventoryItem.initialStock,
+    )
+      ? currentSelectedOnlineInventoryItem.initialStock.map((item) => ({
+          ...item,
+          isFromDatabase: true, // Add a flag to indicate this item is from the database
+        }))
+      : [];
+
+    if (initialStock.length > 0) {
+      const lastItem = initialStock[initialStock.length - 1];
+      const lastItemDate = moment(lastItem.date);
+      const currentDate = moment(date);
+
+      for (
+        let m = moment(lastItemDate).add(1, 'days');
+        m.isBefore(currentDate, 'day');
+        m.add(1, 'days')
+      ) {
+        initialStock.push({
+          _id: Math.random().toString(), // Generate a random ID for the new item
+          date: m.toISOString(),
+          quantity: lastItem.quantity,
+        });
+      }
+
+      if (lastItemDate.isBefore(currentDate, 'day')) {
+        initialStock.push({
+          _id: Math.random().toString(), // Generate a random ID for the new item
+          date: currentDate.toISOString(),
+          quantity: lastItem.quantity,
+        });
+      }
+    }
+
+    initialStock.forEach((item) => {
+      processedCurrentSelectedOnlineInventoryItem.push({
+        key: item._id,
+        date: item.date,
+        quantity: item.quantity,
+        isFromDatabase: item.isFromDatabase, // Copy the flag
+      });
+    });
+
+    return processedCurrentSelectedOnlineInventoryItem.sort((a, b) => {
+      return new Date(b.date) - new Date(a.date);
+    });
+  };
+
   useEffect(() => {
     getAllCategories();
     getOnlineInventoryItems();
@@ -553,6 +786,12 @@ const Inventory = () => {
       setEditedQuantity(customQuantity);
     }
   }, [isItemsDetailsModalVisible, customQuantity]);
+
+  useEffect(() => {
+    if (isInitialStockModalVisible) {
+      setInitialStockEditedQuantity(initialStockCustomQuantity);
+    }
+  }, [isInitialStockModalVisible, initialStockCustomQuantity]);
 
   return (
     <>
@@ -623,6 +862,7 @@ const Inventory = () => {
           </Form>
         )}
       </Modal>
+      {/* This is the modal for item details */}
       <Modal
         title="Item details"
         width={'80%'}
@@ -642,6 +882,27 @@ const Inventory = () => {
         <Table
           dataSource={processCurrentSelectedOnlineInventoryItem()}
           columns={selectedOnlineInventoryItemColumns}
+        />
+      </Modal>
+      <Modal
+        title="Initial stock details"
+        width={'80%'}
+        open={isInitialStockModalVisible}
+        onCancel={() => {
+          setIsInitialStockModalVisible(false);
+          setInitialStockCustomQuantity(-1);
+          setInitialStockEditedQuantity(null);
+        }}
+        onOk={() => {
+          setIsInitialStockModalVisible(false);
+          setInitialStockCustomQuantity(-1);
+          setInitialStockEditedQuantity(null);
+        }}
+        centered
+      >
+        <Table
+          dataSource={processCurrentSelectedOnlineInventoryItemInitialStock()}
+          columns={selectedOnlineInventoryItemInitialStockColumns}
         />
       </Modal>
       <div className={styles.inventory}>
