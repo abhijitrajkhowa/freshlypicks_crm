@@ -110,6 +110,7 @@ const Setting = () => {
                   <Option value="red">Red</Option>
                   <Option value="orange">Orange</Option>
                   <Option value="yellow">Yellow</Option>
+                  <Option value="green">Green</Option>
                 </Select>
               </div>
             </div>

@@ -81,6 +81,8 @@ export default function App() {
         return RefineThemes.Orange;
       case 'yellow':
         return RefineThemes.Yellow;
+      case 'green':
+        return RefineThemes.Green;
       default:
         return RefineThemes.Blue;
     }
