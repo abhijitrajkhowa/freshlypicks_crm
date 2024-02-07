@@ -581,7 +581,7 @@ const GenerateBill = () => {
                                       </span>
                                       <div className={styles.innerInputWrapper}>
                                         <Input
-                                          type="number"
+                                          type="text" // Change the type to "text"
                                           placeholder="Enter vendor price"
                                           value={
                                             order.customVendorPrice
@@ -591,9 +591,8 @@ const GenerateBill = () => {
                                                 ] || ''
                                           }
                                           onChange={(e) => {
-                                            const newVendorPrice = parseFloat(
-                                              e.target.value,
-                                            );
+                                            const newVendorPrice =
+                                              e.target.value; // Store the value as a string
 
                                             // Update the order object with the new vendor price
                                             order.customVendorPrice =
@@ -616,7 +615,8 @@ const GenerateBill = () => {
                                               [item._id]: {
                                                 ...(prevAmounts[item._id] ||
                                                   {}),
-                                                [order.name]: newVendorPrice,
+                                                [order.name]:
+                                                  parseFloat(newVendorPrice), // Parse the value to a number when updating the amounts state
                                               },
                                             }));
 
