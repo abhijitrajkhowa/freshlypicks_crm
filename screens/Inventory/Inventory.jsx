@@ -155,6 +155,17 @@ const Inventory = () => {
 
   const handleIncrease = (item) => {
     // Increase the quantity of the item
+    const currentStock = Array.isArray(
+      currentSelectedOnlineInventoryItem.currentStock,
+    )
+      ? [...currentSelectedOnlineInventoryItem.currentStock]
+      : [];
+    let updatedItem = currentStock.find((stock) => stock._id === item.key);
+    updatedItem.quantity += 1;
+    setCurrentSelectedOnlineInventoryItem({
+      ...currentSelectedOnlineInventoryItem,
+      currentStock: currentStock,
+    });
   };
 
   const handleDecrease = (item) => {
