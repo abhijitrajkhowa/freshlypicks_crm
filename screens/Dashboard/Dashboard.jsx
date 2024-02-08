@@ -5,6 +5,8 @@ import HorizontalNavBar from '../../components/HorizontalNavBar/HorizontalNavBar
 import FrozenItemsChart from '../../components/FrozenItemsChart/FrozenItemsChart';
 import OtherItemsChart from '../../components/OtherItemsChart/OtherItemsChart';
 import TopTenSellingItemsChart from '../../components/TopTenSellingItemsChart/TopTenSellingItemsChart';
+import TopTenSellingCategoriesChart from '../../components/TopTenSellingCategoriesChart/TopTenSellingCategoriesChart';
+import ItemWiseSalesChart from '../../components/ItemWiseSalesChart/ItemWiseSalesChart';
 
 const Dashboard = () => {
   return (
@@ -24,6 +26,14 @@ const Dashboard = () => {
             <div className={styles.individualChartWrapper}>
               <h2 className={styles.chartTitle}>Top 10 Selling Items</h2>
               <TopTenSellingItemsChart />
+            </div>
+            <div className={styles.individualChartWrapper}>
+              <h2 className={styles.chartTitle}>Top 10 Selling Categories</h2>
+              <TopTenSellingCategoriesChart />
+            </div>
+            <div className={styles.individualChartWrapper}>
+              <h2 className={styles.chartTitle}>Item Wise Sales</h2>
+              <ItemWiseSalesChart />
             </div>
           </div>
         </div>
