@@ -17,7 +17,7 @@ const Dashboard = () => {
               <FrozenItemsChart />
             </div>
             <div className={styles.otherItemsWrapper}>
-              <h2 className={styles.chartTitle}>Other Items</h2>
+              <h2 className={styles.chartTitle}>All Items</h2>
               <OtherItemsChart />
             </div>
           </div>

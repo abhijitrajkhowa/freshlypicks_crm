@@ -101,18 +101,20 @@ const OtherItemsChart = () => {
   const processOrders = () => {
     const items = {};
     orders.forEach((order) => {
-      // const orderDate = moment(order.date, 'DD/MM/YYYY');
-      // if (
-      //   selectedRange &&
-      //   !orderDate.isBetween(
-      //     moment(selectedRange[0], 'DD/MM/YYYY'),
-      //     moment(selectedRange[1], 'DD/MM/YYYY'),
-      //     'day',
-      //     '[]',
-      //   )
-      // ) {
-      //   return;
-      // }
+      const orderDate = moment(order.date, 'DD/MM/YYYY'); // code for the range selection
+      if (
+        selectedRange &&
+        selectedRange[0] !== '' &&
+        selectedRange[1] !== '' &&
+        !orderDate.isBetween(
+          moment(selectedRange[0], 'DD/MM/YYYY'),
+          moment(selectedRange[1], 'DD/MM/YYYY'),
+          'day',
+          '[]',
+        )
+      ) {
+        return;
+      }
       order.items.forEach((item) => {
         if (
           selectedCategory === 'Meat'
@@ -169,62 +171,83 @@ const OtherItemsChart = () => {
 
   return (
     <>
-      <div className={styles.otherItemsChart}>
-        <div className={styles.selectWrapper}>
-          {/* <div className={styles.rangeSelectionWrapper}>
-            <DatePicker.RangePicker
+      <div className={styles.selectWrapper}>
+        <div className={styles.rangeSelectionWrapper}>
+          <Form>
+            <Form.Item
+              name="range"
+              label="Date Range"
               className={styles.datePicker}
-              onChange={(date, dateString) => {
-                setSelectedRange(dateString);
-              }}
-              placeholder={['Start Date', 'End Date']}
-              format="DD-MM-YYYY"
-              value={
-                selectedRange
-                  ? [
-                      moment(selectedRange[0], 'DD-MM-YYYY'),
-                      moment(selectedRange[1], 'DD-MM-YYYY'),
-                    ]
-                  : null
-              }
-            />
-          </div> */}
-          <Select
-            className={styles.selectCategory}
-            placeholder="Select Category"
-            allowClear
-            showSearch
-            style={{ width: 200 }}
-            value={selectedCategory || 'Select Category'}
-            onChange={(value) => setSelectedCategory(value)}
-          >
-            {selectCategories.map((category) => (
-              <Select.Option value={category.value}>
-                {category.name}
-              </Select.Option>
-            ))}
-          </Select>
+            >
+              <DatePicker.RangePicker
+                className={styles.datePicker}
+                onChange={(date, dateString) => {
+                  setSelectedRange(dateString);
+                }}
+                placeholder={['Start Date', 'End Date']}
+                format="DD-MM-YYYY"
+                value={
+                  selectedRange
+                    ? [
+                        moment(selectedRange[0], 'DD-MM-YYYY'),
+                        moment(selectedRange[1], 'DD-MM-YYYY'),
+                      ]
+                    : null
+                }
+                disabledDate={(current) => {
+                  return current && current.isAfter(dayjs().endOf('day'));
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="category"
+              label="Category"
+              className={styles.selectCategory}
+            >
+              <Select
+                className={styles.selectCategory}
+                placeholder="Select Category"
+                allowClear
+                showSearch
+                style={{ width: 200 }}
+                value={selectedCategory || 'Select Category'}
+                onChange={(value) => setSelectedCategory(value)}
+              >
+                {selectCategories.map((category) => (
+                  <Select.Option value={category.value}>
+                    {category.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
         </div>
-        <BarChart
-          width={500}
-          height={300}
-          data={processOrders()}
-          margin={{
-            right: 30,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <Bar
-            dataKey="count"
-            fill="#fe5b3a"
-            barSize={30}
-            activeBar={<Rectangle fill="pink" stroke="blue" />}
-          ></Bar>
-        </BarChart>
+      </div>
+      <div className={styles.otherItemsChart}>
+        {orders.length !== 0 ? (
+          <BarChart
+            width={500}
+            height={300}
+            data={processOrders()}
+            margin={{
+              right: 30,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Bar
+              dataKey="count"
+              fill="#fe5b3a"
+              barSize={30}
+              activeBar={<Rectangle fill="pink" stroke="blue" />}
+            />
+          </BarChart>
+        ) : (
+          <Spin />
+        )}
       </div>
     </>
   );
