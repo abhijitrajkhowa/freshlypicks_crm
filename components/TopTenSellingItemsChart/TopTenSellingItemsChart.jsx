@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './OtherItemsChart.module.css';
+import styles from './TopTenSellingItemsChart.module.css';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import {
@@ -54,99 +54,52 @@ import {
   LabelList,
 } from 'recharts';
 
-const OtherItemsChart = () => {
-  const orders = useSelector((state) => state.orders);
-  const [selectedCategory, setSelectedCategory] = useState('Meat');
+const TopTenSellingItemsChart = () => {
   const [selectedRange, setSelectedRange] = useState('');
+  const [topTenSellingItems, setTopTenSellingItems] = useState([]);
 
-  const selectCategories = [
-    {
-      name: 'Meat',
-      value: 'Meat',
-    },
-    {
-      name: 'Vegetable',
-      value: 'Vegetable',
-    },
-    {
-      name: 'Fruits',
-      value: 'Fruits',
-    },
-    {
-      name: 'dry Fruits',
-      value: 'Dry Fruits',
-    },
-    {
-      name: 'Fish',
-      value: 'Fish',
-    },
-    {
-      name: 'Eggs & Dairy',
-      value: 'Eggs & Dairy',
-    },
-    {
-      name: 'Special Cuts',
-      value: 'Special Cuts',
-    },
-    {
-      name: 'Combo',
-      value: 'Combo',
-    },
-    {
-      name: 'Fresh Juice',
-      value: 'Fresh Juice',
-    },
-  ];
-
-  const processOrders = () => {
-    const items = {};
-    orders.forEach((order) => {
-      const orderDate = moment(order.date, 'DD/MM/YYYY'); // code for the range selection
-      if (
-        selectedRange &&
-        selectedRange[0] !== '' &&
-        selectedRange[1] !== '' &&
-        !orderDate.isBetween(
-          moment(selectedRange[0], 'DD/MM/YYYY'),
-          moment(selectedRange[1], 'DD/MM/YYYY'),
-          'day',
-          '[]',
-        )
-      ) {
-        return;
-      }
-      order.items.forEach((item) => {
-        if (
-          selectedCategory === 'Meat'
-            ? item.category?.includes(selectedCategory)
-            : item.category === selectedCategory
-        ) {
-          let itemName = item.name;
-          if (selectedCategory === 'Meat') {
-            itemName = itemName.split('(')[0].trim();
-            itemName = itemName
-              .replace(/small cut|medium cut|large cut/gi, '')
-              .trim();
-          }
-          const quantity = parseFloat(item.quantity);
-          if (items[itemName]) {
-            items[itemName].count += 1;
-            items[itemName].quantity += isNaN(quantity) ? 0 : quantity;
-          } else {
-            items[itemName] = {
-              count: 1,
-              quantity: isNaN(quantity) ? 0 : quantity,
-            };
-          }
+  const getTopTenSellingItems = () => {
+    window.electron
+      .invoke('api-request', {
+        method: 'POST',
+        url: `${baseUrl}/crm/top-10-selling-items`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          selectedRange: selectedRange,
+        },
+      })
+      .then((response) => {
+        const data = JSON.parse(response.body);
+        if (response.status !== 200) {
+          toast.error(data.error, {
+            position: 'bottom-center',
+          });
+          return;
         }
+        toast.success(data.message, {
+          position: 'bottom-center',
+        });
+        setTopTenSellingItems(data.result);
+      })
+      .catch((err) => {
+        toast.error(err.message, {
+          position: 'bottom-center',
+        });
       });
-    });
+  };
 
-    const processedOrders = Object.keys(items)
-      .map((name) => ({ name, ...items[name] }))
+  const processItems = () => {
+    const processedItems = topTenSellingItems
+      .map((item) => ({
+        name: item._id,
+        count: item.count,
+        quantity: item.totalQuantity,
+      }))
       .sort((a, b) => b.count - a.count);
 
-    return processedOrders;
+    return processedItems;
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -170,9 +123,14 @@ const OtherItemsChart = () => {
   };
 
   useEffect(() => {
-    console.log('selectedCategory', selectedCategory);
-    console.log('selectedRange', selectedRange);
-  }, [selectedCategory, selectedRange]);
+    getTopTenSellingItems();
+  }, []);
+
+  useEffect(() => {
+    if (selectedRange) {
+      getTopTenSellingItems();
+    }
+  }, [selectedRange]);
 
   return (
     <>
@@ -204,36 +162,15 @@ const OtherItemsChart = () => {
                 }}
               />
             </Form.Item>
-            <Form.Item
-              name="category"
-              label="Category"
-              className={styles.selectCategory}
-            >
-              <Select
-                className={styles.selectCategory}
-                placeholder="Select Category"
-                allowClear
-                showSearch
-                style={{ width: 200 }}
-                value={selectedCategory || 'Select Category'}
-                onChange={(value) => setSelectedCategory(value)}
-              >
-                {selectCategories.map((category) => (
-                  <Select.Option value={category.value}>
-                    {category.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
           </Form>
         </div>
       </div>
       <div className={styles.otherItemsChart}>
-        {orders.length !== 0 ? (
+        {topTenSellingItems.length !== 0 ? (
           <BarChart
             width={500}
             height={300}
-            data={processOrders()}
+            data={processItems()}
             margin={{
               right: 30,
             }}
@@ -258,4 +195,4 @@ const OtherItemsChart = () => {
   );
 };
 
-export default OtherItemsChart;
+export default TopTenSellingItemsChart;

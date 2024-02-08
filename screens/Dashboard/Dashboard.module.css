@@ -1,17 +1,13 @@
 .chartsWrapper {
   display: flex;
-  padding: 24px 16px 0 16px;
-  gap: 16px;
+  padding: 24px 16px 24px 16px;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
-.frozenItemWrapper {
+.individualChartWrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.otherItemsWrapper {
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   gap: 8px;
 }
