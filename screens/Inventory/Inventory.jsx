@@ -661,6 +661,12 @@ const Inventory = () => {
       .filter((item) => {
         return item.category === category || item.category.includes(category);
       })
+      .filter((item) => {
+        return searchedTerm
+          ? item.name.toLowerCase().includes(searchedTerm.toLowerCase()) ||
+              item.category.toLowerCase().includes(searchedTerm.toLowerCase())
+          : true;
+      })
       .forEach((item) => {
         processedOnlineInventoryItems.push({
           key: item._id,
