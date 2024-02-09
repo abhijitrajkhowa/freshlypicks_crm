@@ -55,7 +55,7 @@ import {
 } from 'recharts';
 
 const TopTenSellingCategoriesChart = () => {
-  const [selectedRange, setSelectedRange] = useState('');
+  const [selectedRange, setSelectedRange] = useState(['', '']);
   const [topTenSellingItems, setTopTenSellingItems] = useState([]);
 
   const getTopTenSellingItems = () => {

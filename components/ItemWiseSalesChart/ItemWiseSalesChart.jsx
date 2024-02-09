@@ -56,7 +56,7 @@ import {
 
 const ItemWiseSalesChart = () => {
   const products = useSelector((state) => state.products);
-  const [selectedRange, setSelectedRange] = useState('');
+  const [selectedRange, setSelectedRange] = useState(['', '']);
   const [topTenSellingItems, setTopTenSellingItems] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState('');
 
@@ -161,6 +161,12 @@ const ItemWiseSalesChart = () => {
     }
   }, [selectedRange, selectedProduct]);
 
+  useEffect(() => {
+    if (products.length > 0) {
+      setSelectedProduct(products[0].name);
+    }
+  }, []);
+
   return (
     <>
       <div className={styles.selectWrapper}>
@@ -199,6 +205,7 @@ const ItemWiseSalesChart = () => {
                 onChange={(value) => {
                   setSelectedProduct(value);
                 }}
+                defaultValue={products[0]?.name || ''}
                 value={selectedProduct || 'Select a product'}
               >
                 {processProductsForSelect()}
