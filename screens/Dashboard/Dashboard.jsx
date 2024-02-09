@@ -7,6 +7,8 @@ import OtherItemsChart from '../../components/OtherItemsChart/OtherItemsChart';
 import TopTenSellingItemsChart from '../../components/TopTenSellingItemsChart/TopTenSellingItemsChart';
 import TopTenSellingCategoriesChart from '../../components/TopTenSellingCategoriesChart/TopTenSellingCategoriesChart';
 import ItemWiseSalesChart from '../../components/ItemWiseSalesChart/ItemWiseSalesChart';
+import GovChart from '../../components/GovChart/GovChart';
+import CrChart from '../../components/CrChart/CrChart';
 
 const Dashboard = () => {
   return (
@@ -34,6 +36,14 @@ const Dashboard = () => {
             <div className={styles.individualChartWrapper}>
               <h2 className={styles.chartTitle}>Item Wise Sales</h2>
               <ItemWiseSalesChart />
+            </div>
+            <div className={styles.individualChartWrapper}>
+              <h2 className={styles.chartTitle}>Gov Chart</h2>
+              <GovChart />
+            </div>
+            <div className={styles.individualChartWrapper}>
+              <h2 className={styles.chartTitle}>Cr Chart</h2>
+              <CrChart />
             </div>
           </div>
         </div>

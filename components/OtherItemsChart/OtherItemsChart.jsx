@@ -169,11 +169,6 @@ const OtherItemsChart = () => {
     return null;
   };
 
-  useEffect(() => {
-    console.log('selectedCategory', selectedCategory);
-    console.log('selectedRange', selectedRange);
-  }, [selectedCategory, selectedRange]);
-
   return (
     <>
       <div className={styles.selectWrapper}>

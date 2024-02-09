@@ -1365,12 +1365,20 @@ const BookKeeping = () => {
                         </Descriptions.Item>
                         <Descriptions.Item label="Total Cr">
                           ₹
-                          {orders
-                            .reduce(
-                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                          {(
+                            orders.reduce(
+                              (acc, order) => acc + order.total,
                               0,
+                            ) -
+                            Number(
+                              vendorBills
+                                .reduce(
+                                  (acc, bill) => acc + parseFloat(bill.amount),
+                                  0,
+                                )
+                                .toFixed(2),
                             )
-                            .toLocaleString()}
+                          ).toLocaleString()}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1406,12 +1414,20 @@ const BookKeeping = () => {
                         </Descriptions.Item>
                         <Descriptions.Item label="Total Cr">
                           ₹
-                          {orders
-                            .reduce(
-                              (acc, order) => acc + (order.cr ? order.cr : 0),
+                          {(
+                            orders.reduce(
+                              (acc, order) => acc + order.total,
                               0,
+                            ) -
+                            Number(
+                              vendorBills
+                                .reduce(
+                                  (acc, bill) => acc + parseFloat(bill.amount),
+                                  0,
+                                )
+                                .toFixed(2),
                             )
-                            .toLocaleString()}
+                          ).toLocaleString()}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
