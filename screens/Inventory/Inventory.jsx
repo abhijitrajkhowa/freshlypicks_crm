@@ -688,29 +688,23 @@ const Inventory = () => {
       ? [...currentSelectedOnlineInventoryItem.currentStock]
       : [];
 
-    if (currentStock.length > 0) {
-      const lastItem = currentStock[currentStock.length - 1];
-      const lastItemDate = moment(lastItem.date);
-      const currentDate = moment(date);
+    currentStock.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    for (let i = 0; i < currentStock.length - 1; i++) {
+      const startDate = moment(currentStock[i].date);
+      const endDate = moment(currentStock[i + 1].date);
 
       for (
-        let m = moment(lastItemDate).add(1, 'days');
-        m.isBefore(currentDate, 'day');
+        let m = moment(startDate).add(1, 'days');
+        m.isBefore(endDate, 'day');
         m.add(1, 'days')
       ) {
-        currentStock.push({
-          _id: Math.random().toString(), // Generate a random ID for the new item
+        currentStock.splice(i + 1, 0, {
+          _id: Math.random().toString(),
           date: m.toISOString(),
-          quantity: lastItem.quantity,
+          quantity: currentStock[i].quantity,
         });
-      }
-
-      if (lastItemDate.isBefore(currentDate, 'day')) {
-        currentStock.push({
-          _id: Math.random().toString(), // Generate a random ID for the new item
-          date: currentDate.toISOString(),
-          quantity: lastItem.quantity,
-        });
+        i++; // increment i to skip the newly added item
       }
     }
 
@@ -722,9 +716,9 @@ const Inventory = () => {
       });
     });
 
-    return processedCurrentSelectedOnlineInventoryItem.sort((a, b) => {
-      return new Date(b.date) - new Date(a.date);
-    });
+    return processedCurrentSelectedOnlineInventoryItem.sort(
+      (a, b) => new Date(b.date) - new Date(a.date),
+    );
   };
 
   const processCurrentSelectedOnlineInventoryItemInitialStock = () => {
@@ -742,18 +736,6 @@ const Inventory = () => {
       const lastItem = initialStock[initialStock.length - 1];
       const lastItemDate = moment(lastItem.date);
       const currentDate = moment(date);
-
-      for (
-        let m = moment(lastItemDate).add(1, 'days');
-        m.isBefore(currentDate, 'day');
-        m.add(1, 'days')
-      ) {
-        initialStock.push({
-          _id: Math.random().toString(), // Generate a random ID for the new item
-          date: m.toISOString(),
-          quantity: lastItem.quantity,
-        });
-      }
 
       if (lastItemDate.isBefore(currentDate, 'day')) {
         initialStock.push({
