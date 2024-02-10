@@ -182,9 +182,9 @@ const TopTenSellingCategoriesChart = () => {
             <Legend />
             <Bar
               dataKey="count"
-              fill="#fe5b3a"
+              fill="#001c55"
               barSize={30}
-              activeBar={<Rectangle fill="pink" stroke="blue" />}
+              activeBar={<Rectangle fill="#a6e1fa" stroke="blue" />}
             />
           </BarChart>
         ) : (

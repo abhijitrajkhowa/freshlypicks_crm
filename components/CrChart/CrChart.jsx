@@ -56,7 +56,7 @@ import {
 
 const CrChart = () => {
   const [selectedRange, setSelectedRange] = useState(['', '']);
-  const [totalSales, setTotalSales] = useState(0);
+  const [totalSales, setTotalSales] = useState([]);
 
   const getTotalSales = () => {
     window.electron
@@ -78,10 +78,7 @@ const CrChart = () => {
           });
           return;
         }
-        // toast.success('Total sales fetched successfully', {
-        //   position: 'bottom-center',
-        // });
-        setTotalSales(data.finalAmount);
+        setTotalSales(data.finalResult);
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -90,12 +87,30 @@ const CrChart = () => {
       });
   };
 
+  const processItems = () => {
+    const processedItems = totalSales
+      .map((item) => ({
+        yearMonth: item.yearMonth,
+        finalAmount: item.finalAmount,
+      }))
+      .sort(
+        (a, b) =>
+          moment(b.yearMonth, 'YYYY-MM').valueOf() -
+          moment(a.yearMonth, 'YYYY-MM').valueOf(),
+      );
+
+    return processedItems;
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipLabel}>
-            {`Total Cr: ${payload[0].value.toLocaleString()}`}
+            {`Total Cr for ${moment(
+              payload[0].payload.yearMonth,
+              'YYYY-MM',
+            ).format('MMMM YYYY')}: ${payload[0].value.toLocaleString()}`}
           </p>
         </div>
       );
@@ -148,25 +163,25 @@ const CrChart = () => {
         </div>
       </div>
       <div className={styles.otherItemsChart}>
-        {totalSales !== 0 ? (
+        {totalSales.length > 0 ? (
           <BarChart
             width={500}
             height={300}
-            data={[{ name: 'Total Sales', value: totalSales }]}
+            data={processItems()}
             margin={{
               right: 30,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
+            <XAxis dataKey="yearMonth" />
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Bar
-              dataKey="value"
-              fill="#fe5b3a"
+              dataKey="finalAmount"
+              fill="#a4133c"
               barSize={30}
-              activeBar={<Rectangle fill="pink" stroke="blue" />}
+              activeBar={<Rectangle fill="#ffb3c1" stroke="blue" />}
             />
           </BarChart>
         ) : (

@@ -90,12 +90,30 @@ const GovChart = () => {
       });
   };
 
+  const processItems = () => {
+    const processedItems = totalSales
+      .map((item) => ({
+        month: item._id.yearMonth,
+        value: item.totalSales,
+      }))
+      .sort(
+        (a, b) =>
+          moment(b.month, 'YYYY-MM').valueOf() -
+          moment(a.month, 'YYYY-MM').valueOf(),
+      );
+
+    return processedItems;
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipLabel}>
-            {`Total Gov: ${payload[0].value.toLocaleString()}`}
+            {`Total Sales for ${moment(
+              payload[0].payload.month,
+              'YYYY-MM',
+            ).format('MMMM YYYY')}: ${payload[0].value.toLocaleString()}`}
           </p>
         </div>
       );
@@ -148,11 +166,11 @@ const GovChart = () => {
         </div>
       </div>
       <div className={styles.otherItemsChart}>
-        {totalSales !== 0 ? (
+        {totalSales.length > 0 ? (
           <BarChart
             width={500}
             height={300}
-            data={[{ name: 'Total Sales', value: totalSales }]}
+            data={processItems()}
             margin={{
               right: 30,
             }}
@@ -164,9 +182,9 @@ const GovChart = () => {
             <Legend />
             <Bar
               dataKey="value"
-              fill="#fe5b3a"
+              fill="#004b23"
               barSize={30}
-              activeBar={<Rectangle fill="pink" stroke="blue" />}
+              activeBar={<Rectangle fill="#ccff33" stroke="blue" />}
             />
           </BarChart>
         ) : (

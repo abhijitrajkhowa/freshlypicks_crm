@@ -113,8 +113,13 @@ const ItemWiseSalesChart = () => {
         count: item.count,
         quantity: item.totalQuantity,
         totalSales: item.totalSales,
+        month: item.yearMonth,
       }))
-      .sort((a, b) => b.count - a.count);
+      .sort(
+        (a, b) =>
+          moment(b.month, 'YYYY-MM').valueOf() -
+          moment(a.month, 'YYYY-MM').valueOf(),
+      );
 
     return processedItems;
   };
@@ -143,6 +148,10 @@ const ItemWiseSalesChart = () => {
             )} kg`}
             <br />
             {`Total sales: ${payload[0].payload.totalSales.toFixed(2)}`}
+            <br />
+            {`Month: ${moment(payload[0].payload.month, 'YYYY-MM').format(
+              'MMMM YYYY',
+            )}`}
           </p>
         </div>
       );
@@ -231,9 +240,9 @@ const ItemWiseSalesChart = () => {
             <Legend />
             <Bar
               dataKey="count"
-              fill="#fe5b3a"
+              fill="#621708"
               barSize={30}
-              activeBar={<Rectangle fill="pink" stroke="blue" />}
+              activeBar={<Rectangle fill="#f6aa1c" stroke="blue" />}
             />
           </BarChart>
         ) : (
