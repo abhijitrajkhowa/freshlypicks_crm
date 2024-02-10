@@ -5,13 +5,24 @@ import { baseUrl } from '../../utils/helper';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import { AnimatedCounter } from 'react-animated-counter';
+import { useSelector } from 'react-redux';
 
 import { SyncOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
-import { Table, Input, Button, Modal, Descriptions, List } from 'antd';
+import {
+  Table,
+  Input,
+  Button,
+  Modal,
+  Descriptions,
+  List,
+  Statistic,
+} from 'antd';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
+  const currentTheme = useSelector((state) => state.themeReducer);
   const [isCustomerInfoLoading, setIsCustomerInfoLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
@@ -26,6 +37,7 @@ const Customers = () => {
   const [totalPages, setTotalPages] = useState(10);
   const [pageSize, setPageSize] = useState(10);
   const [searchedTerm, setSearchedTerm] = useState('');
+  const [totalUserCount, setTotalUserCount] = useState(0);
 
   const getAllUsers = (page = 1, limit = pageSize, searchTerm = '') => {
     setIsCustomerInfoLoading(true);
@@ -55,6 +67,7 @@ const Customers = () => {
         setCustomers(data.users);
         setCurrentPage(data.currentPage);
         setTotalPages(data.totalPages);
+        setTotalUserCount(data.totalUserCount);
       })
       .catch((err) => {
         toast.error(err.message, {
@@ -122,6 +135,7 @@ const Customers = () => {
         setIsCurrentUserOrdersLoading(false);
       });
   };
+
   const getCurrentUserOrdersCount = async (phone) => {
     return window.electron
       .invoke('api-request', {
@@ -157,7 +171,7 @@ const Customers = () => {
   const processCustomersData = () => {
     const processedData = customers
       .filter((customer) => customer.name.trim() !== '')
-      .map((customer) => {
+      .map((customer, index) => {
         const address =
           customer.house +
           ', ' +
@@ -398,6 +412,17 @@ const Customers = () => {
       </Modal>
       <div className={styles.customers}>
         <div className={styles.searchBarAndRefreshButtonWrapper}>
+          <Descriptions style={{ minWidth: 300 }} size="small" bordered>
+            <Descriptions.Item label="Total Customers">
+              <AnimatedCounter
+                value={totalUserCount}
+                fontSize="16px"
+                includeCommas
+                includeDecimals={false}
+                color={currentTheme === 'dark' ? '#fafafa' : '#2C2C2C'}
+              />
+            </Descriptions.Item>
+          </Descriptions>
           <Input.Search
             placeholder="Search by name or phone number or address"
             size="large"

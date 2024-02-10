@@ -95,8 +95,8 @@ const CrChart = () => {
       }))
       .sort(
         (a, b) =>
-          moment(b.yearMonth, 'YYYY-MM').valueOf() -
-          moment(a.yearMonth, 'YYYY-MM').valueOf(),
+          moment(a.yearMonth, 'YYYY-MM').valueOf() -
+          moment(b.yearMonth, 'YYYY-MM').valueOf(),
       );
 
     return processedItems;

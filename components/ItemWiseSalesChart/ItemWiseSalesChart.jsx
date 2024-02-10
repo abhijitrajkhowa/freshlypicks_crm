@@ -117,8 +117,8 @@ const ItemWiseSalesChart = () => {
       }))
       .sort(
         (a, b) =>
-          moment(b.month, 'YYYY-MM').valueOf() -
-          moment(a.month, 'YYYY-MM').valueOf(),
+          moment(a.month, 'YYYY-MM').valueOf() -
+          moment(b.month, 'YYYY-MM').valueOf(),
       );
 
     return processedItems;
