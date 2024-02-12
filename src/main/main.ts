@@ -66,6 +66,10 @@ class AppUpdater {
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
   }
+
+  checkForUpdates() {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
 }
 
 let mainWindow: BrowserWindow | null = null;
