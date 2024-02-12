@@ -103,7 +103,7 @@ const CrChart = () => {
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
+    if (active && payload && payload?.length) {
       return (
         <div className={styles.customTooltip}>
           <p className={styles.tooltipLabel}>
@@ -163,7 +163,7 @@ const CrChart = () => {
         </div>
       </div>
       <div className={styles.otherItemsChart}>
-        {totalSales.length > 0 ? (
+        {totalSales?.length > 0 ? (
           <BarChart
             width={500}
             height={300}
