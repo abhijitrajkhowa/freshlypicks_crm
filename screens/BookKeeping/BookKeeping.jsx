@@ -283,42 +283,47 @@ const BookKeeping = () => {
       },
     },
     {
-      title: 'C.R',
-      dataIndex: 'cr',
-      key: 'cr',
-      render: (text, record, index) => {
-        return record.cr === 0 ? (
-          <Button
-            onClick={() => {
-              setIsAddCrModalVisible(true);
-              setCurrentAddCrItemIndex(index);
-              setCurrentSelectedCrItem(record);
-            }}
-            icon={<PlusOutlined />}
-            type="primary"
-          >
-            Add C.R.
-          </Button>
-        ) : (
-          <div className={styles.crWrapper}>
-            {record.cr}
-            <div className={styles.editIcon}>
-              <Popconfirm
-                title="Delete the cr"
-                description="Are you sure to delete this cr value?"
-                okText="Yes"
-                cancelText="No"
-                placement="left"
-                onConfirm={() => deleteCr(record)}
-                okButtonProps={{ loading: isDeletingCr }}
-              >
-                <CloseCircleOutlined />
-              </Popconfirm>
-            </div>
-          </div>
-        );
-      },
+      title: 'Delivered by',
+      dataIndex: 'deliveredBy',
+      key: 'deliveredBy',
     },
+    // {
+    //   title: 'C.R',
+    //   dataIndex: 'cr',
+    //   key: 'cr',
+    //   render: (text, record, index) => {
+    //     return record.cr === 0 ? (
+    //       <Button
+    //         onClick={() => {
+    //           setIsAddCrModalVisible(true);
+    //           setCurrentAddCrItemIndex(index);
+    //           setCurrentSelectedCrItem(record);
+    //         }}
+    //         icon={<PlusOutlined />}
+    //         type="primary"
+    //       >
+    //         Add C.R.
+    //       </Button>
+    //     ) : (
+    //       <div className={styles.crWrapper}>
+    //         {record.cr}
+    //         <div className={styles.editIcon}>
+    //           <Popconfirm
+    //             title="Delete the cr"
+    //             description="Are you sure to delete this cr value?"
+    //             okText="Yes"
+    //             cancelText="No"
+    //             placement="left"
+    //             onConfirm={() => deleteCr(record)}
+    //             okButtonProps={{ loading: isDeletingCr }}
+    //           >
+    //             <CloseCircleOutlined />
+    //           </Popconfirm>
+    //         </div>
+    //       </div>
+    //     );
+    //   },
+    // },
   ];
 
   const modalTableColumns = [
@@ -453,6 +458,7 @@ const BookKeeping = () => {
         price: order.total,
         cr: order.cr ? order.cr : 0,
         remark: order.remark,
+        deliveredBy: order.acceptedBy ? order.acceptedBy : 'Not delivered',
       };
     });
 
@@ -1290,7 +1296,7 @@ const BookKeeping = () => {
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
             <Input.Search
-              placeholder="Search"
+              placeholder="Search by item name"
               size="large"
               allowClear
               value={searchedTerm}

@@ -16,6 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
 import _ from 'lodash';
+import { AnimatedCounter } from 'react-animated-counter';
 
 import {
   FloatButton,
@@ -38,11 +39,42 @@ import {
 
 const PendingPayments = () => {
   const user = useSelector((state) => state.user);
+  const currentTheme = useSelector((state) => state.themeReducer);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isReloadButtonLoading, setIsReloadButtonLoading] = useState(false);
   const [allPendingOrders, setAllPendingOrders] = useState([]);
   const [processedPendingOrders, setProcessedPendingOrders] = useState([]);
   const [searchedTerm, setSearchedTerm] = useState('');
+  const [totalPendingAmount, setTotalPendingAmount] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [currentMessage, setCurrentMessage] = useState('');
+  let greeting;
+  const currentHour = moment().hour();
+  if (currentHour < 12) {
+    greeting = 'Good morning';
+  } else if (currentHour < 18) {
+    greeting = 'Good afternoon';
+  } else {
+    greeting = 'Good evening';
+  }
+
+  const showModal = (number) => {
+    setPhoneNumber(number);
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+    sendMessage(
+      phoneNumber,
+      currentMessage ? currentMessage : 'Hello, this is Freshly Picks',
+    );
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
 
   const sendMessage = (number, message) => {
     window.electron.invoke('send-whatsapp-message', number, message);
@@ -155,17 +187,8 @@ const PendingPayments = () => {
               <a
                 onClick={(e) => {
                   e.preventDefault();
-                  let greeting;
-                  const currentHour = moment().hour();
-                  if (currentHour < 12) {
-                    greeting = 'Good morning';
-                  } else if (currentHour < 18) {
-                    greeting = 'Good afternoon';
-                  } else {
-                    greeting = 'Good evening';
-                  }
-                  sendMessage(
-                    record.phone,
+                  showModal(record.phone);
+                  setCurrentMessage(
                     `${greeting} ${record.name},\n\nYour pending bill amount of *₹ ${record.total}* is due on ${record.date}.\n\nYou can pay us online through *GPAY no. 9101441959* (Surajit Rajkhowa). \n\nPlease settle at your earliest convenience.\n\nThank you,\nFreshlypicks`,
                   );
                 }}
@@ -280,6 +303,9 @@ const PendingPayments = () => {
           return;
         }
         setAllPendingOrders(data);
+        setTotalPendingAmount(
+          data.orders.reduce((acc, order) => acc + order.total, 0),
+        );
         setIsReloadButtonLoading(false);
         setIsInitialLoading(false);
       })
@@ -302,6 +328,19 @@ const PendingPayments = () => {
 
   return (
     <>
+      <Modal
+        centered
+        title="Enter Phone Number"
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Input
+          value={phoneNumber}
+          style={{ marginTop: 8, marginBottom: 4 }}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
+      </Modal>
       <div className={styles.pendingPayments}>
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
@@ -319,6 +358,17 @@ const PendingPayments = () => {
               {isReloadButtonLoading && 'Refreshing'}
               {!isReloadButtonLoading && 'Refresh'}
             </Button>
+            <Descriptions style={{ minWidth: 300 }} size="small" bordered>
+              <Descriptions.Item label="Total pending amount">
+                <AnimatedCounter
+                  value={totalPendingAmount}
+                  fontSize="16px"
+                  includeCommas
+                  includeDecimals={false}
+                  color={currentTheme === 'dark' ? '#fafafa' : '#2C2C2C'}
+                />
+              </Descriptions.Item>
+            </Descriptions>
             <Input.Search
               size="large"
               placeholder="Search by name or phone number or address"
