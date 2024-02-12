@@ -971,6 +971,26 @@ const BookKeeping = () => {
     processOrders();
   }, [searchedTerm]);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowRight') {
+        setDate((prevDate) =>
+          dayjs(prevDate).add(1, 'day').format('YYYY-MM-DD'),
+        );
+      } else if (event.key === 'ArrowLeft') {
+        setDate((prevDate) =>
+          dayjs(prevDate).subtract(1, 'day').format('YYYY-MM-DD'),
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <>
       <Modal

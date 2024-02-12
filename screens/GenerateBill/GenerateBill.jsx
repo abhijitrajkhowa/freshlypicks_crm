@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../utils/helper';
+import { AnimatedCounter } from 'react-animated-counter';
 
 import {
   DatePicker,
@@ -35,6 +36,7 @@ import { SET_DATE } from '../../redux/types';
 
 const GenerateBill = () => {
   const dispatch = useDispatch();
+  const currentTheme = useSelector((state) => state.themeReducer);
   const generateBillDate = useSelector((state) => state.date.generateBill);
   const user = useSelector((state) => state.user);
   const [date, setDate] = useState(
@@ -57,6 +59,7 @@ const GenerateBill = () => {
   const [isDeletingItemFromBill, setIsDeletingItemFromBill] = useState(false);
   const [updatedItems, setUpdatedItems] = useState({});
   const [miscValue, setMiscValue] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleSwitchChange = (itemIndex, checked) => {
     // Create a new object with the updated item
@@ -368,6 +371,26 @@ const GenerateBill = () => {
     getVendorBills();
   }, [date]);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowRight') {
+        setDate((prevDate) =>
+          dayjs(prevDate).add(1, 'day').format('YYYY-MM-DD'),
+        );
+      } else if (event.key === 'ArrowLeft') {
+        setDate((prevDate) =>
+          dayjs(prevDate).subtract(1, 'day').format('YYYY-MM-DD'),
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <>
       <Modal
@@ -444,19 +467,33 @@ const GenerateBill = () => {
         <div className={styles.mainContents}>
           <div className={styles.datePickerWrapper}>
             <DatePicker
+              style={{ minWidth: 150 }}
               value={dayjs(date ? date : dayjs().format('YYYY-MM-DD'))}
               onChange={onDateChange}
               size="large"
             />
-            <Descriptions bordered>
+            <Descriptions style={{ minWidth: 300 }} size="small" bordered>
               <Descriptions.Item label="Total amount">
-                {Number(
-                  vendorBills
-                    .reduce((acc, bill) => acc + parseFloat(bill.amount), 0)
-                    .toFixed(2),
-                ).toLocaleString()}
+                <AnimatedCounter
+                  value={Number(
+                    vendorBills
+                      .reduce((acc, bill) => acc + parseFloat(bill.amount), 0)
+                      .toFixed(2),
+                  )}
+                  fontSize="16px"
+                  includeCommas
+                  includeDecimals={false}
+                  color={currentTheme === 'dark' ? '#fafafa' : '#2C2C2C'}
+                />
               </Descriptions.Item>
             </Descriptions>
+            <Input.Search
+              placeholder="Search by vendro name"
+              allowClear
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="large"
+            />
             <Button
               onClick={() => {
                 setIsItemModalVisible(true);
@@ -475,191 +512,209 @@ const GenerateBill = () => {
               <Empty description="No bills found" style={emptyComponentStyle} />
             )}
             {vendorBills &&
-              vendorBills.map((item, index) => {
-                return (
-                  <div className={styles.billMainContents} key={index}>
-                    <Descriptions
-                      key={index}
-                      className={styles.descriptionParent}
-                      title={`${item.name}`}
-                      contentStyle={fontStyle}
-                      labelStyle={fontStyle}
-                      layout="vertical"
-                      column={5}
-                      bordered
-                    >
-                      <Descriptions.Item label="Vendor name">
-                        {item.name}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Date">
-                        {dayjs(item.date).format('DD-MM-YYYY')}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Amount">
-                        <div className={styles.amountWrapper}>
-                          {getTotalAmount(item)}
-                          <div className={styles.editIcon}>
-                            <CloseCircleOutlined
-                              onClick={() => setAmountToZero(item._id)}
+              vendorBills
+                .filter((bill) => {
+                  return bill.name
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase());
+                })
+                .map((item, index) => {
+                  return (
+                    <div className={styles.billMainContents} key={index}>
+                      <Descriptions
+                        key={index}
+                        className={styles.descriptionParent}
+                        title={`${item.name}`}
+                        contentStyle={fontStyle}
+                        labelStyle={fontStyle}
+                        layout="vertical"
+                        column={5}
+                        bordered
+                      >
+                        <Descriptions.Item label="Vendor name">
+                          {item.name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Date">
+                          {dayjs(item.date).format('DD-MM-YYYY')}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Amount">
+                          <div className={styles.amountWrapper}>
+                            {getTotalAmount(item)}
+                            <div className={styles.editIcon}>
+                              <CloseCircleOutlined
+                                onClick={() => setAmountToZero(item._id)}
+                              />
+                            </div>
+                          </div>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Paid">
+                          <div className={styles.paidTextAndSwitchWrapper}>
+                            <div style={badgeWrapperStyle}>
+                              {item.paid ? (
+                                <Badge status="success" text="Paid" />
+                              ) : (
+                                <Badge status="processing" text="Not paid" />
+                              )}
+                            </div>
+                            <Switch
+                              checked={item.paid}
+                              onChange={(checked) =>
+                                handleSwitchChange(index, checked)
+                              }
                             />
                           </div>
-                        </div>
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Paid">
-                        <div className={styles.paidTextAndSwitchWrapper}>
-                          <div style={badgeWrapperStyle}>
-                            {item.paid ? (
-                              <Badge status="success" text="Paid" />
-                            ) : (
-                              <Badge status="processing" text="Not paid" />
-                            )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Remarks">
+                          <div className={styles.editRemarkWrapper}>
+                            <div>{item.remarks}</div>
+                            <div className={styles.editIcon}>
+                              <EditOutlined
+                                onClick={() => {
+                                  setIsRemarksModalVisible(true);
+                                  setCurrentRemarks(vendorBills[index].remarks);
+                                  setCurrentEditItemIndex(index);
+                                }}
+                              />
+                            </div>
                           </div>
-                          <Switch
-                            checked={item.paid}
-                            onChange={(checked) =>
-                              handleSwitchChange(index, checked)
-                            }
-                          />
-                        </div>
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Remarks">
-                        <div className={styles.editRemarkWrapper}>
-                          <div>{item.remarks}</div>
-                          <div className={styles.editIcon}>
-                            <EditOutlined
-                              onClick={() => {
-                                setIsRemarksModalVisible(true);
-                                setCurrentRemarks(vendorBills[index].remarks);
-                                setCurrentEditItemIndex(index);
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </Descriptions.Item>
-                      {item.orders.length > 0 && (
-                        <Descriptions.Item span={5} label="items">
-                          <List>
-                            {item.orders.map((order, index) => {
-                              return (
-                                <List.Item key={index}>
-                                  <div className={styles.listItemMainWrapper}>
-                                    <div
-                                      className={styles.titleAndHeaderWrapper}
-                                    >
+                        </Descriptions.Item>
+                        {item.orders.length > 0 && (
+                          <Descriptions.Item span={5} label="items">
+                            <List>
+                              {item.orders.map((order, index) => {
+                                return (
+                                  <List.Item key={index}>
+                                    <div className={styles.listItemMainWrapper}>
                                       <div
-                                        className={styles.listItemTitleWrapper}
+                                        className={styles.titleAndHeaderWrapper}
                                       >
-                                        <span className={styles.listItemtitle}>
-                                          {order.name}{' '}
-                                          <div className={styles.editIcon}>
-                                            <DeleteOutlined
-                                              onClick={() => {
-                                                setIsDeleteItemFromBillModalOpen(
-                                                  true,
-                                                );
-                                                setCurrentDeleteItem({
-                                                  billId: item._id,
-                                                  item: order,
-                                                });
-                                              }}
-                                            />
-                                          </div>
-                                        </span>
-                                      </div>
-                                      <div
-                                        className={styles.listItemHeaderWrapper}
-                                      >
-                                        <span className={styles.listItemHeader}>
-                                          {order.quantity} {order.unit}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className={styles.inputWrapper}>
-                                      <span
-                                        className={styles.listItemInputTitle}
-                                      >
-                                        Vendor Price{' '}
-                                        <span
+                                        <div
                                           className={
-                                            styles.vendorPriceFromAppWrapper
+                                            styles.listItemTitleWrapper
                                           }
                                         >
-                                          ₹{order.vendorPrice}/{order.sdunit} :
-                                        </span>
-                                      </span>
-                                      <div className={styles.innerInputWrapper}>
-                                        <Input
-                                          type="text" // Change the type to "text"
-                                          placeholder="Enter vendor price"
-                                          value={
-                                            order.customVendorPrice
-                                              ? order.customVendorPrice
-                                              : amounts[item._id]?.[
-                                                  order.name
-                                                ] || ''
+                                          <span
+                                            className={styles.listItemtitle}
+                                          >
+                                            {order.name}{' '}
+                                            <div className={styles.editIcon}>
+                                              <DeleteOutlined
+                                                onClick={() => {
+                                                  setIsDeleteItemFromBillModalOpen(
+                                                    true,
+                                                  );
+                                                  setCurrentDeleteItem({
+                                                    billId: item._id,
+                                                    item: order,
+                                                  });
+                                                }}
+                                              />
+                                            </div>
+                                          </span>
+                                        </div>
+                                        <div
+                                          className={
+                                            styles.listItemHeaderWrapper
                                           }
-                                          onChange={(e) => {
-                                            const newVendorPrice =
-                                              e.target.value; // Store the value as a string
+                                        >
+                                          <span
+                                            className={styles.listItemHeader}
+                                          >
+                                            {order.quantity} {order.unit}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className={styles.inputWrapper}>
+                                        <span
+                                          className={styles.listItemInputTitle}
+                                        >
+                                          Vendor Price{' '}
+                                          <span
+                                            className={
+                                              styles.vendorPriceFromAppWrapper
+                                            }
+                                          >
+                                            ₹{order.vendorPrice}/{order.sdunit}{' '}
+                                            :
+                                          </span>
+                                        </span>
+                                        <div
+                                          className={styles.innerInputWrapper}
+                                        >
+                                          <Input
+                                            type="text" // Change the type to "text"
+                                            placeholder="Enter vendor price"
+                                            value={
+                                              order.customVendorPrice
+                                                ? order.customVendorPrice
+                                                : amounts[item._id]?.[
+                                                    order.name
+                                                  ] || ''
+                                            }
+                                            onChange={(e) => {
+                                              const newVendorPrice =
+                                                e.target.value; // Store the value as a string
 
-                                            // Update the order object with the new vendor price
-                                            order.customVendorPrice =
-                                              newVendorPrice;
+                                              // Update the order object with the new vendor price
+                                              order.customVendorPrice =
+                                                newVendorPrice;
 
-                                            // Get the current state of the updatedItem object
-                                            const updatedItem = updatedItems[
-                                              item._id
-                                            ] || { ...item };
+                                              // Get the current state of the updatedItem object
+                                              const updatedItem = updatedItems[
+                                                item._id
+                                              ] || { ...item };
 
-                                            // Update the updatedItem object with the new order in its orders array
-                                            updatedItem.orders =
-                                              updatedItem.orders.map((o, i) =>
-                                                i === index ? order : o,
+                                              // Update the updatedItem object with the new order in its orders array
+                                              updatedItem.orders =
+                                                updatedItem.orders.map(
+                                                  (o, i) =>
+                                                    i === index ? order : o,
+                                                );
+
+                                              // Update the amounts state
+                                              setAmounts((prevAmounts) => ({
+                                                ...prevAmounts,
+                                                [item._id]: {
+                                                  ...(prevAmounts[item._id] ||
+                                                    {}),
+                                                  [order.name]:
+                                                    parseFloat(newVendorPrice), // Parse the value to a number when updating the amounts state
+                                                },
+                                              }));
+
+                                              // Update the updatedItems state
+                                              setUpdatedItems(
+                                                (prevUpdatedItems) => ({
+                                                  ...prevUpdatedItems,
+                                                  [item._id]: updatedItem,
+                                                }),
                                               );
-
-                                            // Update the amounts state
-                                            setAmounts((prevAmounts) => ({
-                                              ...prevAmounts,
-                                              [item._id]: {
-                                                ...(prevAmounts[item._id] ||
-                                                  {}),
-                                                [order.name]:
-                                                  parseFloat(newVendorPrice), // Parse the value to a number when updating the amounts state
-                                              },
-                                            }));
-
-                                            // Update the updatedItems state
-                                            setUpdatedItems(
-                                              (prevUpdatedItems) => ({
-                                                ...prevUpdatedItems,
-                                                [item._id]: updatedItem,
-                                              }),
-                                            );
-                                          }}
-                                        />
+                                            }}
+                                          />
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </List.Item>
-                              );
-                            })}
-                          </List>
-                        </Descriptions.Item>
-                      )}
-                    </Descriptions>
-                    <Button
-                      loading={isSavingBill}
-                      onClick={() =>
-                        saveVendorBill(updatedItems[item._id] || item)
-                      }
-                      icon={<SaveOutlined />}
-                      type="primary"
-                      size="large"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                );
-              })}
+                                  </List.Item>
+                                );
+                              })}
+                            </List>
+                          </Descriptions.Item>
+                        )}
+                      </Descriptions>
+                      <Button
+                        loading={isSavingBill}
+                        onClick={() =>
+                          saveVendorBill(updatedItems[item._id] || item)
+                        }
+                        icon={<SaveOutlined />}
+                        type="primary"
+                        size="large"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  );
+                })}
           </div>
         </div>
       </div>
